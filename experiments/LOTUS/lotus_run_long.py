@@ -13,13 +13,13 @@ for model_conf in ['PDE', 'SPDE-noWM', 'SPDE']:
 
     cfg.ne   = 1000
     cfg.nz   = 300
-    cfg.Hmin = 1.0
+    cfg.Hmin = 0.0
     cfg.Hmax = 100.0
-    cfg.lat  = 34.0
+    cfg.lat  = 34.98
     cfg.device = "cuda:0"
 
     # --- Time ---
-    cfg.dt   = 3600
+    cfg.dt   = 1800
     cfg.tend = 3600.0 * 24 * 30
 
     # --- Wind ---
@@ -42,7 +42,7 @@ for model_conf in ['PDE', 'SPDE-noWM', 'SPDE']:
     # ---------------------------------
     # ----- MIXING model choice -------
     # ---------------------------------
-    
+    cfg.kpp_regularization = False
     cfg.kpp_azm_min = 1e-4
     cfg.kpp_azt_min = 1e-4
                 

@@ -32,13 +32,12 @@ def momentum_equation_step(model: Model) -> None:
 
     # --- Neumann BC ---
     d_azmdz = ops.d_azmdz.clone()
-    azm_dn = azm[:, 1, 0]
-    d_azmdz[:, 0, 1] =  azm_dn / dz**2
-    d_azmdz[:, 0, 0] = -azm_dn / dz**2
-
-    azm_up = azm[:, nz-1, 0]
-    d_azmdz[:, -1, -2] =  azm_up / dz**2
-    d_azmdz[:, -1, -1] = -azm_up / dz**2
+    a_top = 0.5 * (azm[:, 0, 0] + azm[:, 1, 0])          # a at 1/2
+    a_bot = 0.5 * (azm[:, nz-1, 0] + azm[:, nz, 0])      # a at nz-1/2
+    d_azmdz[:, 0, 1]   =  a_top / (0.5 * dz**2)
+    d_azmdz[:, 0, 0]   = -a_top / (0.5 * dz**2)
+    d_azmdz[:, -1, -2] =  a_bot / (0.5 * dz**2)
+    d_azmdz[:, -1, -1] = -a_bot / (0.5 * dz**2)
 
     if cfg.wave_mixing:
         # --- Linear operator ---
@@ -50,9 +49,8 @@ def momentum_equation_step(model: Model) -> None:
         rhs = ue + Fk * dt
 
         if cfg.vel_stochastic:
-            dB = sqrt_dt * torch.randn_like(ue, **fkw)
             Gk = 1j * f * sig_h + (sig_z * Dz) @ (ue + us)
-            rhs -= Gk*dB
+            rhs -= Gk*state.dB_w
     else:
         # --- Linear operator ---
         L = Idc - dt * (d_azmdz - 1j*f*Idc)
@@ -62,9 +60,8 @@ def momentum_equation_step(model: Model) -> None:
         rhs = ue + Fk * dt
         
         if cfg.vel_stochastic:
-            dB = sqrt_dt * torch.randn_like(ue, **fkw)
             Gk = 1j * f * sig_h + (sig_z * Dz) @ ue
-            rhs -= Gk*dB
+            rhs -= Gk*state.dB_w
 
     # --- Boundary forcing ---
     tau_w = (cdrho * torch.abs(ua) * ua).squeeze(-1)
@@ -73,8 +70,8 @@ def momentum_equation_step(model: Model) -> None:
     Fsurf = tau_w + tau_s if cfg.wave_mixing else tau_w
     Fbotm = torch.zeros_like(tau_w)
     
-    rhs[:,  0, :] += dt * Fsurf / dz
-    rhs[:, -1, :] += dt * Fbotm / dz
+    rhs[:,  0, :] += dt * Fsurf / (0.5 * dz)
+    rhs[:, -1, :] += dt * Fbotm / (0.5 * dz)
 
     # Solve L ue^{n+1} = RHS
     ue_new = torch.linalg.solve(L, rhs)

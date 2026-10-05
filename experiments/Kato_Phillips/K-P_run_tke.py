@@ -65,7 +65,7 @@ for nz_val in [512, 256]:
 
         savefile.init_file(model.state)
         savefile.save(model.state)
-                
+
         # ================== Main Loop ==================
         for kt in range(cfg.nt):
             prof.start()

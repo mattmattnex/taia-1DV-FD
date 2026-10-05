@@ -23,16 +23,17 @@ class Grid:
         fkw = cfg.farr_kwargs
         Hmin, Hmax = cfg.Hmin, cfg.Hmax
         
-        dz  = torch.tensor((Hmax - Hmin) / (nz-1), **fkw)
-        self.z_c = -torch.linspace(Hmin,          Hmax +     dz, nz,   **fkw)
-        self.z_w = -torch.linspace(Hmin - 0.5*dz, Hmax + 1.5*dz, nz+1, **fkw)
+        # Domain [-Hmax, -Hmin], nz cells of thickness dz.
+        # Faces (z_w, nz+1) bound the cells; centers (z_c, nz) are midpoints.
+        dz = (Hmax - Hmin) / nz
+        self.z_w = -torch.linspace(Hmin, Hmax, nz + 1, **fkw)
+        self.z_c = 0.5 * (self.z_w[:-1] + self.z_w[1:])
 
-        self.dz = torch.abs(self.z_c[1] - self.z_c[0])
-        
-        self.inv_dz   = 1 / dz
-        self.inv_2dz  = 1 / (2*dz)
-        self.inv_dz2  = 1 / dz**2
-        self.inv_2dz2 = 1 / (2*dz**2)
+        self.dz = torch.tensor(dz, **fkw)
+        self.inv_dz   = 1 / self.dz
+        self.inv_2dz  = 1 / (2 * self.dz)
+        self.inv_dz2  = 1 / self.dz**2
+        self.inv_2dz2 = 1 / (2 * self.dz**2)
         
         self.z_c.unsqueeze_(0).unsqueeze_(-1)
         self.z_w.unsqueeze_(0).unsqueeze_(-1)

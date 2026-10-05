@@ -43,7 +43,7 @@ class Operators:
         self.d_dz_c[:, -1, -1] = 1.5
         self.d_dz_c[:, -1, -2] = -2
         self.d_dz_c[:, -1, -3] = 0.5
-        self.d_dz_c *= cff
+        self.d_dz_c *= -cff
         
         # Cell faces
         for i in range(1, nz):
@@ -56,28 +56,24 @@ class Operators:
         self.d_dz_w[:, -1, -1] = 1.5
         self.d_dz_w[:, -1, -2] = -2
         self.d_dz_w[:, -1, -3] = 0.5
-        self.d_dz_w *= cff
+        self.d_dz_w *= -cff
         
         # Cell centers to faces
         for i in range(1, nz):
             self.d_dz_c2w[:, i, i-1] = -1.0
             self.d_dz_c2w[:, i, i  ] =  1.0
-        self.d_dz_c2w *= cff
+        self.d_dz_c2w *= -cff
 
-    def update_momentum_diffusion(self, azm: torch.Tensor):
-        nz  = self._cfg.nz
-        cff = self._grd.inv_dz2
-
+    def update_momentum_diffusion(self, azm):
+        nz, cff = self._cfg.nz, self._grd.inv_dz2
+        
+        a_half = 0.5 * (azm[:, :-1, 0] + azm[:, 1:, 0])      # (ne, nz): a at i+1/2
         i = torch.arange(1, nz, device=azm.device)
-
-        azm_up = azm[:, i,     0]
-        azm_dn = azm[:, i + 1, 0]
-
+        
         self.d_azmdz.zero_()
-
-        self.d_azmdz[:, i, i - 1] = azm_up * cff
-        self.d_azmdz[:, i, i + 1] = azm_dn * cff
-        self.d_azmdz[:, i, i    ] = -(azm_up + azm_dn) * cff
+        self.d_azmdz[:, i, i - 1] =  a_half[:, i - 1] * cff
+        self.d_azmdz[:, i, i + 1] =  a_half[:, i]     * cff
+        self.d_azmdz[:, i, i]     = -(a_half[:, i - 1] + a_half[:, i]) * cff
 
 
     def update_tracers_diffusion(self, azt: torch.Tensor):
@@ -90,7 +86,6 @@ class Operators:
         azt_dn = azt[:, i + 1, 0]
 
         self.d_aztdz.zero_()
-
         self.d_aztdz[:, i, i - 1] = azt_up * cff
         self.d_aztdz[:, i, i + 1] = azt_dn * cff
         self.d_aztdz[:, i, i    ] = -(azt_up + azt_dn) * cff

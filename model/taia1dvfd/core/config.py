@@ -113,8 +113,8 @@ class Config:
     
     # --- Salinity model ---
     salt_stochastic: bool = False
-    Ssurf:  float = 20.5 # Initial surface S
-    Sbotm:  float = 20.0 # Initial bottom S
+    Ssurf:  float = 20.0 # Initial surface S
+    Sbotm:  float = 20.5 # Initial bottom S
     
     # --- Temperature model ---
     temp_stochastic: bool = False

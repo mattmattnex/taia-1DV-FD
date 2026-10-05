@@ -27,7 +27,7 @@ def _brunt_vaisala(model: Model):
     Dcw = ops.d_dz_c2w
 
     # Derivative center to faces nz -> nz+1
-    N2 = cfg.g / cfg.rho_o * (Dcw @ rho)
+    N2 = -cfg.g / cfg.rho_o * (Dcw @ rho)
     
     # zero-gradient BC
     N2[:, 0,  :] = N2[:,  1, :]

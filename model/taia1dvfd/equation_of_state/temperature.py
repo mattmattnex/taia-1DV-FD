@@ -72,15 +72,13 @@ def temperature_equation_step(model: Model,
     
     if bc_top == "neumann":
         rhs[:,  0, 0] += -dt * Fsurf / dz
+    elif bc_top == "dirichlet":  
+            Lop[:, 0, :] = 0.0
+            Lop[:, 0, 0] = 1.0
+            rhs[:, 0, :] = temp_surf.unsqueeze(-1)
     
     if bc_btm == "neumann":
         rhs[:, -1, 0] += -dt * Fbotm / dz
-
-    elif bc_top == "dirichlet":  
-        Lop[:, 0, :] = 0.0
-        Lop[:, 0, 0] = 1.0
-        rhs[:, 0, :] = temp_surf.unsqueeze(-1)
-    
     elif bc_btm == "dirichlet":
         Lop[:, -1,  :] = 0.0
         Lop[:, -1, -1] = 1.0

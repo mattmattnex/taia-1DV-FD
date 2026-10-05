@@ -25,7 +25,7 @@ def wind_ornstein_step(model: Model):
     c2 = torch.sqrt(1 - c1**2) * cfg.wind_std
     
     # Random wind fluctuation
-    rd_cplx = torch.randn_like(ua, **ckw)
+    rd_cplx = torch.randn_like(ua.real) + 1j * torch.randn_like(ua.real)
 
     # Wind velocity update
     ua_new = ua_m + c1 * (ua - ua_m) + c2 * rd_cplx

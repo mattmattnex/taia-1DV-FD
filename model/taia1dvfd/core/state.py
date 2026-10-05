@@ -15,6 +15,8 @@ class State:
     ue: torch.Tensor = field(init=False)
     
     # Noise
+    dB_w : torch.Tensor = field(init=False)
+    dB_c : torch.Tensor = field(init=False)
     sig_h: torch.Tensor = field(init=False)
     sig_z: torch.Tensor = field(init=False)
 
@@ -48,13 +50,17 @@ class State:
         
         # Time
         self.time = torch.tensor(0.0, **fkw)
-        
+
         # Physics
         self.ua    = torch.zeros(ne,    1, 1, **ckw)
         self.us    = torch.zeros(ne, nz+1, 1, **ckw)
         self.ue    = torch.zeros(ne, nz+1, 1, **ckw)
         self.sig_h = torch.zeros(ne, nz+1, 1, **ckw)
         self.sig_z = torch.zeros(ne, nz+1, 1, **fkw)
+        
+        # Noise
+        self.dB_w  = torch.zeros(ne, nz+1, 1, **fkw)
+        self.dB_c  = torch.zeros(ne,   nz, 1, **fkw)
 
         # Vertical mixing
         self.az_m = torch.zeros(ne, nz+1, 1, **fkw)

@@ -18,7 +18,7 @@ def kpp_step(u_star, model:Model):
     a1 = cfg.kpp_c2 / cfg.f
 
     # Boundary layer depth
-    u_star.unsqueeze_(-1)
+    u_star = u_star.unsqueeze(-1)
     h = a1 * u_star
     blMask = torch.where(abs(z) <= h, 1., 0.)
     zt = - z / h
