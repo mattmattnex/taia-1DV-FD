@@ -18,7 +18,8 @@ class State:
     dB_w : torch.Tensor = field(init=False)
     dB_c : torch.Tensor = field(init=False)
     sig_h: torch.Tensor = field(init=False)
-    sig_z: torch.Tensor = field(init=False)
+    sig_z_m: torch.Tensor = field(init=False)
+    sig_z_t: torch.Tensor = field(init=False)
 
     # Vertical mixing
     az_m: torch.Tensor = field(init=False)
@@ -55,8 +56,11 @@ class State:
         self.ua    = torch.zeros(ne,    1, 1, **ckw)
         self.us    = torch.zeros(ne, nz+1, 1, **ckw)
         self.ue    = torch.zeros(ne, nz+1, 1, **ckw)
-        self.sig_h = torch.zeros(ne, nz+1, 1, **ckw)
-        self.sig_z = torch.zeros(ne, nz+1, 1, **fkw)
+        
+        # Sigmas
+        self.sig_h   = torch.zeros(ne, nz+1, 1, **ckw)
+        self.sig_z_m = torch.zeros(ne, nz+1, 1, **fkw)
+        self.sig_z_t = torch.zeros(ne,   nz, 1, **fkw)
         
         # Noise
         self.dB_w  = torch.zeros(ne, nz+1, 1, **fkw)

@@ -15,18 +15,22 @@ def noise_LU_init(model: Model):
 
 def noise_LU_step(model:Model):
     cfg = model.config
+    grd = model.grid
     state = model.state
     
     # Fetch
     us   = model.state.us
     az_m = model.state.az_m
-        
+    az_t = model.state.az_t
+            
     # Compute noise
-    sz = torch.sqrt(2 * az_m)
-    sh = 2 * cfg.hs * us  / sz
+    szm = torch.sqrt(2 * az_m)
+    szt = torch.sqrt(2 * az_t)
+    sh = 2 * cfg.hs * us  / szm
 
     # Update
-    state.sig_z[:] = sz
+    state.sig_z_m[:] = szm
+    state.sig_z_t[:] = grd.to_c(szt)
     state.sig_h[:] = sh
     state.dB_w[:] = cfg.sqrt_dt * torch.randn(cfg.ne, cfg.nz+1, 1, **cfg.farr_kwargs)
     state.dB_c[:] = (state.dB_w[:, :-1] + state.dB_w[:, 1:]) / 2**0.5 # unit variance, correlated with both faces, design choice

@@ -1,16 +1,25 @@
 import torch
 from taia1dvfd.core import Model
 
-def salinity_equation_init(model: Model):
-    z = model.grid.z_c
+def salinity_equation_init(model: Model, salt_init: torch.Tensor | None = None):
+    zc = model.grid.z_c
     cfg = model.config
-    
-    dS = cfg.Ssurf - cfg.Sbotm
-    salt_init = cfg.Ssurf + dS * z / model.config.Hmax
 
-    model.state.salt[:] = salt_init
+    # --- CAREFULL, FORCING LOTUS ONLY --- 
+    if salt_init is not None:
+        S0 = salt_init.clone()
+        
+    else:
+        S0 = torch.zeros_like(model.state.salt)
+        dS = cfg.Ssurf - cfg.Sbotm
+        S0[:] = cfg.Ssurf - dS * (-zc - cfg.Hmin) / (cfg.Hmax - cfg.Hmin)
+        
+    model.state.salt[:] = S0
 
-def salinity_equation_step(model: Model):
+def salinity_equation_step(model: Model, 
+                              salt_surf: torch.Tensor | None = None,
+                              salt_botm: torch.Tensor | None = None,
+                              ):
     state = model.state
     cfg   = model.config
     grd   = model.grid
@@ -19,28 +28,24 @@ def salinity_equation_step(model: Model):
     # --- Variables ---
     salt_old = state.salt
     azt      = state.az_t
-    sig_z    = state.sig_z
+    sig_z    = state.sig_z_t
     
     # --- Parameters ---
     fkw = cfg.farr_kwargs
-    sqrt_dt = cfg.sqrt_dt
     dz = grd.dz
     dt = cfg.dt
     nz = cfg.nz
-    
-    bc = 'neumann'
-    Fsurf = 0.0
-    Fbotm = 0.0
-    
+        
     # --- Diffusion operator ---
     d_aztdz = ops.d_aztdz.clone()
 
     # --- Neumann BC ---
-    if bc == "neumann":
+    if cfg.salt_bc_top == "neumann":
         azt_dn = azt[:, 1, 0] # face below surface cell
         d_aztdz[:, 0, 1] =  azt_dn / dz**2
         d_aztdz[:, 0, 0] = -azt_dn / dz**2
-
+    
+    if cfg.salt_bc_btm == "neumann":
         azt_up = azt[:, nz-1, 0] # face above bottom cell
         d_aztdz[:, -1, -2] =  azt_up / dz**2
         d_aztdz[:, -1, -1] = -azt_up / dz**2
@@ -51,26 +56,28 @@ def salinity_equation_step(model: Model):
     Dz = ops.d_dz_c
         
     # --- RHS ---
+    Fsurf = 0.0
+    Fbotm = 0.0
     Fk = 0
     rhs = salt_old + Fk*dt
     
     if cfg.salt_stochastic:
-        dB = sqrt_dt * torch.randn_like(salt_old, **fkw)
-        Gk = grd.to_c(sig_z) * (Dz @ salt_old)
-        rhs -= Gk*dB
+        Gk = sig_z * (Dz @ salt_old)
+        rhs -= Gk * state.dB_c
     
-    if bc == "neumann":
+    if cfg.salt_bc_top == "neumann":
         rhs[:,  0, 0] += -dt * Fsurf / dz
-        rhs[:, -1, 0] += -dt * Fbotm / dz
-
-    elif bc == "dirichlet":  
-        Lop[:, 0, :] = 0.0
-        Lop[:, 0, 0] = 1.0
-        rhs[:, 0, :] = 0.5 # Surface value
-        
+    elif cfg.salt_bc_top == "dirichlet":  
+            Lop[:, 0, :] = 0.0
+            Lop[:, 0, 0] = 1.0
+            rhs[:, 0, :] = salt_surf.unsqueeze(-1)
+    
+    if cfg.salt_bc_btm == "neumann":
+        rhs[:, -1, 0] += dt * Fbotm / dz
+    elif cfg.salt_bc_btm == "dirichlet":
         Lop[:, -1,  :] = 0.0
         Lop[:, -1, -1] = 1.0
-        rhs[:, -1,  :] = 0.5 # Bottom value    
+        rhs[:, -1,  :] = salt_botm.unsqueeze(-1)
     
     # --- Solver ---
     state.salt[:] = torch.linalg.solve(Lop, rhs)

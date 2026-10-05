@@ -42,8 +42,10 @@ for wm_tuple in [(False, False), (True, False), (False, True), (True, True)]:
     cfg.vel_stochastic  = True
 
     # --- EOS ---
+    cfg.temp_bc_top = "neumann"
     cfg.Tsurf  = 20
     cfg.Tbotm  = 20
+    cfg.salt_bc_top = "neumann"
     cfg.Ssurf = 38
     cfg.Sbotm = 38
 

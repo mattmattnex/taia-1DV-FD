@@ -112,11 +112,15 @@ class Config:
     beta_S: float = 1e-3 # Haline contraction coefficient
     
     # --- Salinity model ---
+    salt_bc_top: str = "dirichlet"
+    salt_bc_btm: str = "neumann"
     salt_stochastic: bool = False
-    Ssurf:  float = 20.0 # Initial surface S
-    Sbotm:  float = 20.5 # Initial bottom S
+    Ssurf:  float = 38.0 # Initial surface S
+    Sbotm:  float = 38.5 # Initial bottom S
     
     # --- Temperature model ---
+    temp_bc_top: str = "dirichlet"
+    temp_bc_btm: str = "neumann"
     temp_stochastic: bool = False
     Tsurf:  float = 20.5 # Initial surface T
     Tbotm:  float = 20.0 # Initial bottom T
