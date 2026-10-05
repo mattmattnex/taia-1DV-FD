@@ -1,0 +1,1 @@
+- 19/06/2023: La version du modele tke dans src_phy est à jour avec les modifs réalisées pour le stage de Nolwenn (passage en F90 des sources, calcul de l'export, clé migrations nychtémérales). Reste à vérifier qu'elle est à jour avec la version de Yutong (échanges air-mer)

@@ -1,0 +1,26 @@
+
+-----------------------------
+Creating initial conditions
+-----------------------------
+
+----------------------------------------------------------------------------------------------------
+First option: we only want to modify the initial intracellular contents of the organisms because 
+the minimum and maximum quotas and ratios have been modified in the parameter file
+----------------------------------------------------------------------------------------------------
+1/ Using the existing initial conditions available in the BIBLIOTHEQUE_CINI/CINI_V0 directory, it is
+possible to regenerate other initial conditions that will modify the initial intracellular contents 
+to make them consistent with the quotas and ratios in the new parameter file.
+
+In this case, you must:
+1.a/ copy the new parameter file in the current directory
+1.b/ indicate the name of this parameter file and the simulation number in the create_cini_quota.sh file
+1.c/ run the create_cini_quota.sh program with the command ./create_cini_quota.sh
+
+
+-----------------------------------------------------------------------------------------------
+Second option: you wish to modify all or part of the initial concentrations
+-----------------------------------------------------------------------------------------------
+In this case, you must:
+2.a/ indicate the simulation number in the create_cini.sh file
+2.b/ run the create_cini.sh program with the command ./create_cini.sh
+2.c/ manually edit the values in the new initial conditions directory located in the BIBLIOTHEQUE_CINI directory 

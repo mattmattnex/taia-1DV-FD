@@ -1,0 +1,71 @@
+# =====================================================================
+# Settings for building Eco3M as a SHARED LIBRARY driven from Python.
+#
+# Derived from Makefile.conf_COUPL. Differences:
+#   + ECO3M_SUB        Eco3M becomes a subroutine; TEND stays a RATE (per second)
+#   - key_tke_eco3m    the TKE 1DV physical model is not used at all
+#   - VIMPLICIT        TKE vertical-scheme key, meaningless without TKE
+#   -static -> -fPIC   object code must be position-independent for a .so
+#
+# Only the CALC stage uses this file. The INI stage (eco3m_ini.exe, which
+# generates call.inc) is unchanged -- keep using Makefile.ini.
+# =====================================================================
+
+# ================================ Output
+PROG_CALC  = ./libeco3m.so
+DIR_CONFIG = ../CONFIG_ECO3M
+
+# ================================ Directories
+# A separate Compile_py tree, so this build never clobbers the working
+# baseline objects in ./Compile.
+COMPIL            = ./Compile_py
+SRC_BIO_DIR       = ../SRC/src_eco3m
+SRC_PY_DIR        = ../SRC/src_python_coupl
+SRC_BIO_CPP_DIR   = ${COMPIL}/petitf
+OBJ_BIO_DIR       = ${COMPIL}/objets
+MOD_DIR           = ${COMPIL}/MODULS
+
+# ================================ Tools
+FC      = gfortran
+LINKER  = gfortran
+CPP     = cpp -nostdinc
+
+# ================================ Include paths
+#   -I${MOD_DIR}                  where .mod files are found
+#   -I./                          where the generated .inc files live (MAKE/)
+#   -I${DIR_CONFIG}/F_PROCESS     the process-function library
+INC = -I${MOD_DIR} -I./ -I${DIR_CONFIG}/F_PROCESS
+
+# ================================ Preprocessor keys
+# CALC       calculation mode (as opposed to INI)
+# COUPL      Eco3M is coupled to an external physical model.
+#            REQUIRED: it is what stops TEND being multiplied by dt_bio,
+#            and what stops albedo being applied a second time.
+# ECO3M_SUB  eco3m_main becomes a SUBROUTINE with no time loop.
+# RGB        3-waveband light extinction (needs INPUTS/kRGB61.txt)
+# RESBIO_A   ASCII output format
+# MODTEST    verbose progress messages during init -- keep while bringing up
+CPPFLAGS       = -P -CC -I../CONFIG_ECO3M -nostdinc \
+                 -DRESBIO_A -DCOUPL -DRGB -DMODTEST -DECO3M_SUB
+
+CPPFLAGS_CALC  = $(CPPFLAGS) -DCALC
+
+# ================================ Compilation options
+# MODE=debug on the command line switches to a checked build:
+#     make -f Makefile.calc_PY MODE=debug
+# -finit-integer makes the "dimensions never set" failure loud instead of
+# silent: nz_max becomes a large negative number and the allocate fails.
+MODE ?= release
+
+ifeq ($(MODE),debug)
+COMP_OPTS = -O0 -g -fPIC -fbacktrace -fcheck=bounds \
+            -finit-real=nan -finit-integer=-999999 \
+            ${INC} -J${MOD_DIR}
+else
+COMP_OPTS = -O2 -g -fPIC ${INC} -J${MOD_DIR}
+endif
+
+# ================================ Link options
+# -shared produces a .so instead of an executable.
+LDFLAG = -shared
+LIBS   =

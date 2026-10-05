@@ -1,0 +1,10 @@
+Pour changer le fichier de forçages physiques:
+- changer le nom du fichier dans dynparam.i
+- eventuellement changer le nb de jours de forçage a lire
+
+Pour changer ma duree de simu:
+- dans runparam.i
+- dans comrunmod  changer jptemps qui risque d'etre insuffisant si on augment la duree
+
+
+5/11/2025: A noter que le fichier dyf_1y_forcings_1d_2000_OK.dat a des forçages realistes de MED12 (TAAASMAAD) incluant une chaleur latente et rayonnement long wave alors que jusqu'alors il n'y avait que le short wave et la chaleur sensible

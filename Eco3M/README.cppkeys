@@ -1,0 +1,3 @@
+* M3D_NCOUPL: cpp key which allows to introduce a vertical dimension associated with light extinction. However, except light extinction, physical processes are absent from this configuration as well as mass transfer from a cell grid to another except for sinking detrital particles.
+
+This key  requires a config.ini_1DV_ file and reads the namelist_eco3M_1DV_3D namelist

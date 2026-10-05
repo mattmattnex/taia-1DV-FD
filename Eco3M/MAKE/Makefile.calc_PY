@@ -1,0 +1,116 @@
+# =====================================================================
+# Build Eco3M (src_eco3m + the C API shim) into libeco3m.so for Python.
+#
+# Prerequisite: the INI stage must already have been run, so that
+# call.inc and the other generated .inc files exist in this directory:
+#
+#     make -f Makefile.ini clean && make -f Makefile.ini
+#     ./eco3m_ini.exe
+#
+# Then:
+#     make -f Makefile.calc_PY clean && make -f Makefile.calc_PY
+#     make -f Makefile.calc_PY MODE=debug        # checked build
+#
+# Note: this Makefile's "clean" does NOT delete the .inc files.
+# =====================================================================
+
+include Makefile.conf_PY
+
+# ---------------------------------------------------------------------
+# Object list. THE ORDER MATTERS.
+#
+# Fortran modules must be compiled before anything that "use"s them,
+# because compiling a module writes a .mod file that later compilations
+# read. This is the order from Makefile.ini, which is the one ordering
+# in this repository known to work on a clean tree.
+#
+# In particular eco3m_user.o must come BEFORE eco3m_var.o
+# (eco3m_var.F90 does "use mod_eco3m_user").
+#
+# eco3m_capi.o comes last: it uses mod_eco3m and mod_eco3m_irrad, so
+# every module it depends on must already exist.
+#
+# No src_phy or src_coupl_phy_eco3m objects: the physical model is
+# replaced by Python.
+# ---------------------------------------------------------------------
+OBJ_BIO = ${OBJ_BIO_DIR}/eco3m_string.o \
+          ${OBJ_BIO_DIR}/eco3m_vartypes.o \
+          ${OBJ_BIO_DIR}/eco3m_files.o \
+          ${OBJ_BIO_DIR}/eco3m.o \
+          ${OBJ_BIO_DIR}/eco3m_user.o \
+          ${OBJ_BIO_DIR}/eco3m_var.o \
+          ${OBJ_BIO_DIR}/eco3m_id.o \
+          ${OBJ_BIO_DIR}/eco3m_fprocess.o \
+          ${OBJ_BIO_DIR}/eco3m_run.o \
+          ${OBJ_BIO_DIR}/eco3m_chl.o \
+          ${OBJ_BIO_DIR}/eco3m_co2.o \
+          ${OBJ_BIO_DIR}/eco3m_extinc.o \
+          ${OBJ_BIO_DIR}/eco3m_flux.o \
+          ${OBJ_BIO_DIR}/eco3m_init.o \
+          ${OBJ_BIO_DIR}/eco3m_mod.o \
+          ${OBJ_BIO_DIR}/eco3m_outputs.o \
+          ${OBJ_BIO_DIR}/eco3m_rgb.o \
+          ${OBJ_BIO_DIR}/eco3m_sms.o
+
+# The C-callable shim, kept in its own source directory so the original
+# Eco3M tree stays untouched.
+OBJ_CAPI = ${OBJ_BIO_DIR}/eco3m_capi.o
+
+OBJS = $(OBJ_BIO) $(OBJ_CAPI)
+
+# Preprocessed sources, kept so they can be inspected and cleaned.
+CPP_FILES = $(addprefix ${SRC_BIO_CPP_DIR}/, \
+              $(notdir $(patsubst %.F90,%.f90,$(wildcard ${SRC_BIO_DIR}/*.F90)))) \
+            $(addprefix ${SRC_BIO_CPP_DIR}/, \
+              $(notdir $(patsubst %.F90,%.f90,$(wildcard ${SRC_PY_DIR}/*.F90))))
+
+.SECONDARY: $(CPP_FILES)
+.PHONY: all dirs clean cleaninc
+
+all: dirs ${PROG_CALC}
+
+# The build tree is not in version control, so create it if missing.
+dirs:
+	@mkdir -p ${OBJ_BIO_DIR} ${SRC_BIO_CPP_DIR} ${MOD_DIR}
+
+# --------------------------- Link ------------------------------------
+${PROG_CALC}: ${OBJS}
+	@echo "CREATING ${PROG_CALC} ..."
+	${LINKER} ${LDFLAG} -o ${PROG_CALC} ${OBJS} ${LIBS}
+	@echo "LINK DONE"
+
+# --------------------------- Compile ---------------------------------
+# Two steps per source file, as in the original Makefiles:
+#
+#   1. cpp   foo.F90  ->  Compile_py/petitf/foo.f90
+#      resolves the #ifdef keys
+#   2. gfortran  foo.f90  ->  Compile_py/objets/foo.o
+#      also resolves the Fortran-level  include "call.inc"  via -I./
+#
+# "%" is a wildcard: one rule covers every file.
+# "$<" is the input, "$@" is the output.
+
+# Eco3M sources
+${SRC_BIO_CPP_DIR}/%.f90: ${SRC_BIO_DIR}/%.F90
+	${CPP} ${CPPFLAGS_CALC} $< $@
+
+# Shim sources (a different source directory needs its own rule)
+${SRC_BIO_CPP_DIR}/%.f90: ${SRC_PY_DIR}/%.F90
+	${CPP} ${CPPFLAGS_CALC} $< $@
+
+${OBJ_BIO_DIR}/%.o: ${SRC_BIO_CPP_DIR}/%.f90
+	${FC} ${COMP_OPTS} -o $@ -c $<
+
+# --------------------------- Clean -----------------------------------
+# Deliberately leaves *.inc alone: regenerating those means re-running
+# the INI stage, which is a separate and slower step.
+clean:
+	@echo "REMOVING OBJECTS, MODULES AND PREPROCESSED SOURCES"
+	rm -f ${OBJ_BIO_DIR}/*.o ${MOD_DIR}/*.mod ${SRC_BIO_CPP_DIR}/*.f90
+	@echo "REMOVING LIBRARY"
+	rm -f ${PROG_CALC}
+
+# Only if you really want to force a full regeneration.
+cleaninc:
+	@echo "REMOVING GENERATED INCLUDE FILES"
+	rm -f *.inc

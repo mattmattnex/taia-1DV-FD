@@ -1,0 +1,89 @@
+!***************************************************************************
+!***************************************************************************
+!Copyright or © or Copr. CNRS/IRD/Université de la Méditerranée
+!contributor(s) : Melika BAKLOUTI & Vincent FAURE (10/10/2006)
+!
+!melika.baklouti@univ-amu.fr; 
+!
+!This software (Eco3M) is a computer program whose purpose is to perform 
+!biogeochemical or coupled physical-biogeochemical modelling.
+!
+!This software is governed by the CeCILL license under French law and
+!abiding by the rules of distribution of free software. You can  use, 
+!modify and/ or redistribute the software under the terms of the CeCILL
+!license as circulated by CEA, CNRS and INRIA at the following URL
+!"http://www.cecill.info". 
+!
+!As a counterpart to the access to the source code and  rights to copy,
+!modify and redistribute granted by the license, users are provided only
+!with a limited warranty  and the software''s author,  the holder of the
+!economic rights,  and the successive licensors  have only  limited
+!liability. 
+!
+!In this respect, the user''s attention is drawn to the risks associated
+!with loading,  using,  modifying and/or developing or reproducing the
+!software by the user in light of its specific status of free software,
+!that may mean  that it is complicated to manipulate,  and  that  also
+!therefore means  that it is reserved for developers  and  experienced
+!professionals having in-depth computer knowledge. Users are therefore
+!encouraged to load and test the software''s suitability as regards their
+!requirements in conditions enabling the security of their systems and/or 
+!data to be ensured and,  more generally, to use and operate it in the 
+!same conditions as regards security. 
+!
+!The fact that you are presently reading this means that you have had
+!knowledge of the CeCILL license and that you accept its terms.
+!***************************************************************************
+!***************************************************************************
+  module mod_eco3m_vartypes
+!
+!> Module that contains all the derived types used in Eco3M
+!! \author Melika Baklouti
+!---------------------------------------------------------------------------
+ use eco3m_string
+
+ TYPE PROC !< Type for the biogeochemical processes included in the model configuration (modele.def file)
+    Integer :: idproc  !< Identifier of process 
+    Character(len=14) :: nomproc  !< Name of the process in the config.ini file
+    Character(len=L_VAR_LG) :: nomsub  !< Name of the associated process function 
+    Integer(2) :: nbpar !< Number of arguments within the process
+    Character(len=10), dimension(:), pointer :: nompar => NULL()  !< Number of expected arguments for the process
+ END TYPE PROC
+    
+ TYPE FLUX  !< Type for the mass fluxes between state variables (config.ini file)
+    Integer, dimension(:), pointer  :: idproc => NULL()   !< ID of the function involved in the sub-process
+    Integer, dimension(:), pointer  :: idproc_glob => NULL()   !< global ID of the sub-process in the whole flux matrix 
+    Integer :: nb_sflux  !< Number of sub-processes into the flux
+    Real(8),dimension(:,:,:),pointer:: val => NULL()  !< Flux value
+ END TYPE FLUX
+    
+ TYPE FLUX_GLOB_USER  !< Type for specific global fluxes
+    Real(8),dimension(:,:,:),pointer:: val => NULL()  !< Flux value
+ END TYPE FLUX_GLOB_USER
+    
+ TYPE PARAM  !< Type for sub-processes parameters
+    Integer      :: ipos(2)   !< Array containing the two variables (i.e. their indexes) involved in the sub-process
+    Integer      :: idproc    !< Identifier associated with the process
+    Character(L_VAR) :: signe  !< Processus sign (barrier.n: deprecated?)  !!MB: A VOIR
+    Real(8),dimension(:),pointer:: valpar => NULL()  !< Array with parameter values involved in the sub-process
+ END TYPE  PARAM
+
+ TYPE VAR_ETAT !< Type for state variables
+    Integer :: idorg !< ID (is the same for all the variables representing a given organism or entity)
+    Character(l_chain) :: comp !< Name of the state variable's compartment (example: phy)
+    Character(l_chain) :: scomp !< Name of the state variable's sub-compartment (example: diatom)
+    Character(l_chain) :: elmt !< Name of the state variable's chemical element (example: N)
+    Real(8), dimension(:,:,:),pointer :: conc => NULL() !< Matrix of variable concentrations
+!#ifdef key_eco3m_sinking !!MB: A VOIR
+!        Real :: vsink  !< Sinking velocity  (m/day)
+!#endif 
+ END TYPE VAR_ETAT
+
+ TYPE VAR_GLOB_USER !< Type for specific global variables
+    Integer :: idorg  !< ID 
+    Real(8), dimension(:,:,:),pointer :: val => NULL() !< Variable concentration
+ END TYPE VAR_GLOB_USER
+
+end module mod_eco3m_vartypes
+
+

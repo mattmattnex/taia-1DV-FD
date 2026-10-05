@@ -1,0 +1,618 @@
+!-----------------------------------------------------------------------------------------
+    
+    subroutine eco3m_var_init
+
+    !> Reads the compartment, sub-compartment and state variable informations
+    !! in the config.ini file, and allocates the dynamical arrays VAR
+    !! (state variables) and nb_elmt (number of state variables within each sub-compartment) 
+    !!
+    !! \date 2015-11-24
+    !! \last modification 2022-04-13
+    !! \author Melika Baklouti, Vincent Faure
+    !! \author Nicolas Barrier
+!-----------------------------------------------------------------------------------------
+    use eco3m_string ! Module for string manipulation
+    use mod_eco3m_files  ! Module for file variables
+    use mod_eco3m
+    use mod_eco3m_user ! Module for user variables
+
+    implicit none
+
+  ! Local variables
+   Character(L_CHAIN) :: chaine, tempo
+   Integer :: errlec, istat 
+   Integer :: ivar
+   Integer :: k
+
+! reads the number of compartments/sub-compartments of the model
+        errlec = 0
+        do 
+            Read(file_config_id,*,iostat=errlec) chaine
+            if (errlec /=0 ) stop 'pb with the reading of the number of compartments'
+            if (chaine(1:1) == '#') cycle
+            tempo = f_chain(chaine, 1, ':')
+            write(*,*)tempo 
+            read(tempo,*) nbcomp
+            tempo = f_chain(chaine, 2, ':')
+            write(*,*)tempo 
+            read(tempo,*) nbscomp
+            tempo = f_chain(chaine, 3, ':')
+            write(*,*)tempo 
+            read(tempo,*) nbvar
+            exit
+        enddo
+
+        ! allocation of the matrix containing the state variables
+        ALLOCATE(VAR(nbvar), STAT=istat)
+        if (istat /= 0) write(*,*) 'pb with the allocation of VAR in sub_init'
+
+        ! number of elements within each sub-compartment (?)
+#ifdef COUPL
+        ALLOCATE(nb_elmt(nbscomp), STAT=istat)
+        if (istat /= 0) write(*,*) 'problem with the allocation of nb_elmt in sub_init'
+#endif
+
+        ! reads the variable-related elements of the config.ini file
+        call fscanf_var
+
+        ! allocation of the concentrations of the state variables
+        do ivar = 1, nbvar  
+            Allocate(VAR(ivar)%conc(nx_min:nx_max,ny_min:ny_max,1:nz_max),stat = istat)
+            if (istat /=0) write(*,*) "problem with the allocation of VAR(", ivar, ")%conc" 
+            VAR(ivar)%conc = 0.d0  ! Initialisation of concentrations at 0
+        enddo
+
+        ! counts the elements belonging to some compartments/sub-compartments
+        call count_model_PFTs
+
+        ! creates the arrays of phyto/zoo/etc indexes
+        call allocate_index_arrays
+
+#ifdef CALC
+        ! Allocation of global additional variables
+        call allocate_globvar_arrays
+#endif
+#ifdef INI
+        write(file_CR_id,*) "==================== Eco3M: Initialisation of state",&
+            & " variables"
+        Write(file_CR_id,*) "Number of compartments: ", nbcomp
+        Write(file_CR_id,*) "Number of sub-compartments: ", nbscomp
+        Write(file_CR_id,*) "Number of state variables: ", nbvar
+        write(file_CR_id,*) 
+        Write(file_CR_id,*) "Variable descriptions: "
+        write(file_CR_id,*) " ID | Compartment | Sub-compartment | Element "
+        do k = 1, nbvar
+            write(file_CR_id,"(I3,6A)") k, ' - ', trim(VAR(k)%comp), &
+                ' - ', trim(VAR(k)%scomp), &
+                ' - ', trim(VAR(k)%elmt)
+        enddo
+        write(file_CR_id,*)
+
+        write(file_CR_id,*) "Number of phyto sub-comp: ", nscp_phy  
+        if (nscp_phy.gt.0) write(file_CR_id,*) "Index of phyto sub-comp.: ", (iscp_phy(k), k=1, nscp_phy)  
+
+        write(file_CR_id,*)
+
+        write(file_CR_id,*) "Number of zoo sub-comp: ", nscp_zoo
+        if (nscp_zoo.gt.0) write(file_CR_id,*) "Index of zoo sub-comp.: ", (iscp_zoo(k), k=1, nscp_zoo)  
+
+        write(file_CR_id,*)
+
+        write(file_CR_id,*) "Number of bac. sub-comp: ", nscp_bac
+        if (nscp_bac.gt.0) write(file_CR_id,*) "Index of bac. sub-comp.: ", (iscp_bac(k), k=1, nscp_bac)  
+        write(file_CR_id,*)
+
+        write(file_CR_id,*) "Number of diaz. sub-comp: ", nphy_diaz
+        if (nphy_diaz.gt.0) write(file_CR_id,*) "Index of diaz sub-comp.: ", (iphy_diaz(k), k=1, nphy_diaz)  
+        write(file_CR_id,*)
+
+        write(file_CR_id,*) "Number of dissolved organic matter: ", nscp_mod
+        if(nscp_mod > 0) write(file_CR_id,*) "Index of dissolved organic matter",&
+            & " variables: ", &
+            (iscp_mod(k), k=1, nscp_mod)
+        write(file_CR_id,*)
+
+        write(file_CR_id,*) "Number of cell variables: ", nscp_cell
+        if(nscp_cell.gt.0) write(file_CR_id,*) "Index of cell variables: ", &
+            (iscp_cell(k), k=1, nscp_cell)
+        write(file_CR_id,*)
+#endif
+    end subroutine eco3m_var_init
+!-----------------------------------------------------------------------------
+    subroutine fscanf_var
+    !> Reads the variable-related information in the config.ini file, and fills the
+    !! components (%comp, %scomp, etc) of  VAR array 
+    !! \author Melika Baklouti, Vincent Faure
+!-----------------------------------------------------------------------------
+    
+    use eco3m_string ! Module for string manipulation
+    use mod_eco3m_files  ! Module for file variables
+    use mod_eco3m
+
+    ! local variables
+    integer :: icomp, nbscomp_loc, iscomp, ivar, nborg
+    character(l_chain) :: chaine, tempo, nomcomp
+    integer :: errlec
+    integer :: k
+    integer :: nbelmt
+
+  ! identification of the compartments and sub-compartments ;
+  ! filling of the VAR(nbvar) matrix
+        icomp  = 0  ! compartment index
+        nbscomp_loc = 0  ! number of sub-compartments within the current compartment
+        iscomp = 0  ! sub-compartment index (used in the iteration over the subcompartments)
+        ivar   = 0  ! state variable index
+        nborg  = 0  ! total number of organisms (i.e subcompartments?)
+
+  ! loop over all the compartments
+        do while (icomp < nbcomp)
+            Read(file_config_id,*,iostat=errlec) chaine
+            if (errlec /= 0) stop 'pb with the reading of matrice VAR in the config.ini file'
+            if (chaine(1:1) == '#') cycle
+            icomp = icomp + 1   ! iteration over the compartment index
+            nomcomp = f_chain(chaine, 1, ':')
+            nomcomp = adjustl(nomcomp)
+            tempo = f_chain(chaine, 2, ':')
+            Read(tempo,*) nbscomp_loc
+
+  ! for each sub-compartment
+            do while (iscomp < nbscomp_loc)
+                Read(file_config_id,*,iostat=errlec) chaine
+
+                if (errlec /= 0) stop 'pb with the reading of subcompartment line in config.ini'
+                if (chaine(1:1) == '#') cycle
+                iscomp = iscomp + 1
+
+  ! number of elements associated with each sub-compartment + 1
+  ! +1 because the nb of strings = nb of : + 1
+                nbelmt = f_nschain(chaine, ':') 
+                nborg = nborg + 1   ! total number of organisms (sub-compartments)
+
+#ifdef COUPL
+  ! number of elements associated with each organism (sub-compartments)
+                nb_elmt(nborg) = nbelmt - 1
+#endif
+
+  ! for each element (among C, N,...)
+                do k = 1, nbelmt-1
+                    ivar = ivar + 1  ! iteration of the number of state variables
+                    VAR(ivar)%comp = nomcomp   ! name of the compartment
+                    VAR(ivar)%scomp = f_chain(chaine, 1, ':')    ! name of the sub-compartment
+                    VAR(ivar)%elmt  = f_chain(chaine, k+1, ':')  ! name of the element
+                    VAR(ivar)%idorg = nborg    ! index of the organism (i.e sub-compartment)
+                enddo
+            enddo
+            iscomp = 0   ! reinitialisation of iteration loop over the elements
+        enddo
+
+  ! checking that the total number of variables matches the one defined in the file
+        if (ivar /= nbvar) stop 'problem with the total number of variables'
+
+    end subroutine fscanf_var
+
+!----------------------------------------------------------------------------
+    subroutine count_model_PFTs
+    !> Subroutine which computes the number of sub-compartments in a given compartment,
+    !! e.g. the number of Plankton Functional Types (PFTs) in the phytoplankton compartment
+    !! or the number of detrital sub-compartments in the detrital matter compartment,... 
+    !! \author Melika Baklouti, Vincent Faure
+!----------------------------------------------------------------------------
+
+    use eco3m_string     ! module for string manipulation
+    use mod_eco3m_files  ! module for file variables
+    use mod_eco3m
+    
+    implicit none
+    integer :: iorg, iorgold_z, iorgold_b, iorgold
+    integer :: ivar
+
+ ! Determination of the number of sub-compartments in the phy/zoo/bac compartments
+ ! Initialization 
+     nscp_phy = 0
+     nscp_zoo = 0
+     nscp_bac = 0
+     nphy_diaz = 0
+     nscp_mod = 0
+     nscp_cell = 0
+
+! loop over the state variables of the biogeochemical model
+     iorgold_b = 0
+     iorgold = 0
+     iorgold_z = 0
+     do ivar = 1,nbvar
+         iorg = VAR(ivar)%idorg
+         if (VAR(ivar)%comp == 'phy' .AND. iorg /= iorgold ) then
+             nscp_phy = nscp_phy + 1
+             iorgold = iorg
+         elseif (VAR(ivar)%comp == 'zoo' .AND. iorg /= iorgold_z ) then
+             nscp_zoo = nscp_zoo + 1
+             iorgold_z = iorg
+         elseif (VAR(ivar)%comp == 'bac' .AND. iorg /= iorgold_b ) then
+             nscp_bac = nscp_bac + 1
+             iorgold_b = iorg
+         endif
+     enddo
+
+ ! number of diazotrophs if any
+     iorgold = 0
+     do ivar = 1,nbvar
+         iorg = VAR(ivar)%idorg
+         if (VAR(ivar)%scomp == 'DIAZ' .AND. iorg /=iorgold) then
+             nphy_diaz = nphy_diaz + 1
+             iorgold = iorg
+         endif
+     enddo
+
+ ! number of sub-compartments of dissolved organic matter
+     iorgold  = 0
+     do ivar = 1,nbvar
+         if (VAR(ivar)%comp == 'mod' .AND. ivar /= iorgold ) then
+             nscp_mod = nscp_mod + 1
+             iorgold = ivar
+         endif
+     enddo
+
+ ! number of organisms represented by an abundance in the model 
+     iorgold = 0
+     do ivar =1,nbvar
+         if (VAR(ivar)%elmt == 'cell' .AND. ivar /= iorgold) then
+             nscp_cell = nscp_cell + 1
+             iorgold = ivar
+         endif
+     enddo
+
+ end subroutine count_model_PFTs
+!--------------------------------------------------------------------
+    subroutine allocate_index_arrays
+    !> Allocates and fills the arrays containing the idorg index of 
+    !! the different sub-compartments present in a given compartment   
+    !! \author Melika Baklouti
+!--------------------------------------------------------------------
+    
+    use eco3m_string     ! module for string manipulation
+    use mod_eco3m_files  ! module for file variables
+    use mod_eco3m
+
+        ! Local variables
+        integer :: icellold, iorgold, iorgold_z, imodold
+        integer :: iorg, iorgold_b, iorgold_d
+        integer :: ivar
+        integer :: ii, jj, kk, ll, nn, pp
+
+        ! Allocation of the vector containing phytoplankton PFTs
+        if (nscp_phy /=0)  then
+            Allocate(iscp_phy(nscp_phy))
+#ifdef MODTEST
+            write(*,*) 'alloc de iscp_phy a',nscp_phy
+#endif
+            iscp_phy = 0
+            iorgold = 0
+        endif
+
+        ! Allocation of the vector containing zooplankton PFTs
+        if (nscp_zoo /=0)    then
+            Allocate(iscp_zoo(nscp_zoo))
+#ifdef MODTEST
+            write(*,*) 'alloc de iscp_zoo a',nscp_zoo
+#endif
+            iscp_zoo = 0
+            iorgold_z = 0
+        endif
+
+        ! Allocation of the vector containing bacteria PFTs
+        if (nscp_bac /=0)   then
+            Allocate(iscp_bac(nscp_bac))
+#ifdef MODTEST
+            write(*,*) 'alloc de iscp_bac a',nscp_bac
+#endif
+            iscp_bac = 0
+            iorgold_b = 0
+        endif
+
+        ! Allocation of the vector containing diazotrophs
+        if (nphy_diaz /=0) then
+            Allocate(iphy_diaz(nphy_diaz))
+#ifdef MODTEST
+            write (*,*) 'alloc de iphy_diaz a', nphy_diaz
+#endif
+            iphy_diaz = 0
+            iorgold_d = 0
+        endif
+
+        ! Allocation of the vector of dissolved organic matter
+        if (nscp_mod /= 0) then
+            Allocate(iscp_mod(nscp_mod))
+#ifdef MODTEST
+            write (*,*) 'alloc de iscp_mod a', nscp_mod
+#endif
+            iscp_mod = 0
+            imodold  = 0
+        endif
+
+        ! Allocation of the vector of cell organisms
+        if (nscp_cell/=0) then
+            Allocate(iscp_cell(nscp_cell))
+#ifdef MODTEST
+            write(*,*) 'alloc de iscp_cell a', nscp_cell
+#endif
+            iscp_cell = 0
+            icellold = 0
+        endif
+
+        ! Determination of the organisms indexes
+        ii=1     
+        jj=1  
+        kk=1    
+        ll=1
+        pp=1
+        nn= 1 
+
+        ! we loop over the state variable arrays
+        ! if the variable is phy, we store the idorg index in the list at the current 
+        ! position, and we iterate 
+        do ivar = 1,nbvar
+            iorg = VAR(ivar)%idorg  ! index of the current variable
+            if (VAR(ivar)%comp == 'phy' .AND. iorg /= iorgold ) then
+                iscp_phy(ii) = iorg
+                ii=ii+1
+                iorgold = iorg
+            elseif (VAR(ivar)%comp == 'zoo' .AND. iorg /= iorgold_z ) then
+                iscp_zoo(jj) = iorg
+                jj=jj+1
+                iorgold_z = iorg
+            elseif (VAR(ivar)%comp == 'bac' .AND. iorg /= iorgold_b ) then
+                iscp_bac(kk) = iorg
+                kk=kk+1
+                iorgold_b = iorg
+            endif
+        enddo
+
+        ! Determination of the indexes of DIAZ organisms
+        do ivar = 1,nbvar
+            iorg = VAR(ivar)%idorg
+            if (VAR(ivar)%scomp == 'DIAZ' .AND. iorg /=iorgold_d) then
+                iphy_diaz(ll) = iorg
+                ll = ll+1
+                iorgold_d = iorg
+            endif
+        enddo
+
+        ! Determination of the indexes of organic matter
+        do ivar = 1,nbvar
+            if (VAR(ivar)%comp == 'mod' .AND. ivar /= imodold ) then
+                iscp_mod(pp) = ivar
+                pp = pp+1
+                imodold = ivar
+            endif
+        enddo
+
+        ! Indexes of the cell organisms
+        do ivar = 1, nbvar
+            if (VAR(ivar)%elmt == 'cell' .AND. ivar /= icellold) then
+                iscp_cell(nn) = ivar
+                nn = nn+1
+                icellold = ivar
+            endif
+        enddo
+
+    end subroutine allocate_index_arrays 
+!--------------------------------------------------------------------------
+#ifdef CALC
+
+    subroutine allocate_globvar_arrays
+
+ !> Subroutine dedicated to the allocation of global arrays containing 
+ !! some process fluxes which values have to be saved such as primary production rate, ...
+ !! if the flux to be saved is not proposed in the present subroutine, it has to be 
+ !! declared in !!MB AVOIR où on les declare
+ !! allocated in the allocate_globvar_arrays_user subroutine
+ !! \author Melika Baklouti, Vincent Faure, Nicolas Barrier, Camille Mazoyer
+  
+!--------------------------------------------------------------------------
+ use eco3m_string     ! Module for string manipulation
+ use mod_eco3m_files  ! Module for file variables
+ use mod_eco3m
+ use mod_eco3m_user ! module for user variables
+
+ integer :: i  ! Dummy loop index
+ integer :: nn
+ integer :: istat  ! Allocation status
+
+!-- Allocation of user-specific global variables 
+call allocate_globvar_arrays_user
+
+
+!----------------------------------------------------------
+! specific rate of primary production (to uncomment if needed)
+!----------------------------------------------------------
+!  if (nscp_phy /=0) Allocate(mu_PPB(nscp_phy),STAT=istat)
+!  if (istat/=0) write(*,*) 'pb d allocation de mu_PPB, istat=',istat
+!  if (allocated (mu_PPB)) then
+!    do i=1,nscp_phy
+      NULLIFY(mu_PPB(i)%val)
+!      write(strlog,"(A,I3,A)") "mu_PPB(", i,")"
+!      Allocate(mu_PPB(i)%val,nx_min:nx_max, &
+!              ny_min:ny_max,1:nz_max), stat = istat)
+!      if (istat /=0) write(*,*) " problem withe the allocation of mu_PPB(",i")"
+!      mu_PPB(i)%idorg=iscp_phy(i)
+!      mu_PPB(i)%val(:,:,:)=0.d0
+!     enddo
+!  endif
+
+
+!----------------------------------------------------------
+! rate of primary production (NR=nutrient replete) (to uncomment if needed)
+!----------------------------------------------------------
+!   if (nscp_phy /=0) Allocate(PPB_NR(nscp_phy),STAT=istat)
+!   if (istat/=0) write(*,*) 'pb d allocation de PPB_NR'
+!   if (allocated (PPB_NR)) then
+!       do i=1,nscp_phy
+!           NULLIFY(PPB_NR(i)%val)
+!           Allocate(PPB_NR(i)%val(nx_min:nx_max, &
+!                ny_min:ny_max,1:nz_max),stat = istat)
+!      if (istat /=0) write(*,*) " problem withe the allocation of PPB_NR(", i,")"
+!           PPB_NR(i)%idorg=iscp_phy(i)
+!           PPB_NR(i)%val(:,:,:)=0.d0
+!       enddo
+!   endif
+!----------------------------------------------------------
+!-- specific rate of primary production (NR = nutrient replete)
+!----------------------------------------------------------
+   if (nscp_phy /=0) Allocate(mu_PPB_NR(nscp_phy),STAT=istat)
+   if (istat/=0) write(*,*) 'pb d allocation de mu_PPB_NR'
+   if (allocated (mu_PPB_NR)) then
+     do i=1,nscp_phy
+!      NULLIFY(mu_PPB_NR(i)%val)
+      Allocate(mu_PPB_NR(i)%val(nx_min:nx_max,ny_min:ny_max,1:nz_max),stat=istat)
+      if (istat /=0) write(*,*) " problem withe the allocation of mu_PPB_NR(", i,")"
+      mu_PPB_NR(i)%idorg=iscp_phy(i)
+      mu_PPB_NR(i)%val(:,:,:)=0.d0
+     enddo
+  endif
+
+!----------------------------------------------------------
+!-- specic rate of community respiration (to uncomment if needed)
+!----------------------------------------------------------
+!  if (nscp_cell /=0) Allocate(mu_resp(nscp_cell),STAT=istat)
+!  if (istat /=0) write(*,*) 'pb dallocation de mu_resp_p'
+!  if (allocated (mu_resp)) then
+!      do i=1,nscp_cell
+!         NULLIFY(mu_resp(i)%val)
+!         Allocate(mu_resp(i)%val(nx_min:nx_max, &
+!               ny_min:ny_max,1:nz_max),stat=istat)
+!        if (istat /=0) write(*,*) " problem withe the allocation of mu_resp(", i,")"
+!          mu_resp(i)%idorg=iscp_cell(i)
+!          mu_resp(i)%val(:,:,:)=0.d0
+!      enddo
+!  endif
+
+!----------------------------------------------------------
+!-- specific rate of  nitrogenase activity (to uncomment if needed)
+!----------------------------------------------------------
+!   if (nphy_diaz /=0) Allocate(mu_nit(nphy_diaz), STAT=istat)
+!   if (istat /=0) write(*,*) 'pb with the allocation of mu_nit'
+!   if (allocated (mu_nit)) then
+!       do i=1,nphy_diaz
+!          NULLIFY(mu_nit(i)%val)
+!          Allocate(mu_nit(i)%val(nx_min:nx_max, &
+!                ny_min:ny_max,1:nz_max),stat = istat)
+!        if (istat /=0) write(*,*) " problem with the allocation of mu_nit(", i,")"
+!          mu_nit(i)%idorg=iphy_diaz(i)
+!          mu_nit(i)%val(:,:,:)=0.d0
+!      enddo
+!  endif
+
+!----------------------------------------------------------
+!-- specific mineralisation rate (to uncomment if needed )
+!----------------------------------------------------------
+!  if (nscp_mod /=0) Allocate(remin(nscp_mod), STAT=istat)
+!  if (istat /=0) write(*,*) 'pb d allocation de remin'
+!  if (allocated (remin)) then
+!      do i=1,nscp_mod
+!          NULLIFY(remin(i)%val)
+!          write(strlog,"(A,I3,A)") "mu_PPB_NR(", i,")"
+!          Allocate(remin(i)%val(nx_min:nx_max,ny_min:ny_max,nz_max),stat = istat)
+!        if (istat /=0) write(*,*) " problem with the allocation of remin(", i,")"
+!          remin(i)%idorg=iscp_mod(i)
+!          remin(i)%val(:,:,:)=0.d0
+!      enddo
+!  endif
+
+!----------------------------------------------------------
+!  Allocations  of the temperature and salinities of the Eco3M model
+!----------------------------------------------------------
+! Temperature
+   Allocate(TEMP_BIO(nx_min:nx_max,ny_min:ny_max,1:nz_max),stat = istat)
+   if (istat /=0) write(*,*) " problem with the allocation of TEMP_BIO"
+
+! Salinity
+   Allocate(SAL_BIO(nx_min:nx_max,ny_min:ny_max,1:nz_max),stat=istat)
+   if (istat /=0) write(*,*) " problem with the allocation of SAL_BIO"
+
+! Allocation of the depth and of the grid of the model
+! Water depth (dynamical height?)
+  Allocate(bathymetry(nx_min:nx_max,ny_min:ny_max),stat=istat)
+  if (istat /=0) write(*,*) " problem with the allocation of prof"
+
+! Grid cell altitude (reference to the bottom)
+  Allocate(depth_z(nx_min:nx_max,ny_min:ny_max,1:nz_max),stat=istat)
+  if (istat /=0) write(*,*) " problem with the allocation of depth_z"
+
+
+ end subroutine allocate_globvar_arrays
+!--------------------------------------------------------------------------
+ subroutine deallocate_globvar_arrays
+
+ !> Subroutine dedicated to the deallocation of global var arrays 
+ !! (mu_graz, mu_nit, etc) used by the biogeochemical model.
+ !! \author Camille Mazoyer
+  
+!--------------------------------------------------------------------------
+ use eco3m_string ! Module for string manipulation
+ use mod_eco3m_files  ! Module for file variables
+ use mod_eco3m
+ use mod_eco3m_user ! module for user variables
+
+call deallocate_globvar_arrays_user
+
+
+!----------------------------------------------------------
+! specific rate of primary production (to uncomment if needed)
+!----------------------------------------------------------
+!  if (nscp_phy /=0) deallocate(mu_PPB)
+!  ! necessary? deAllocate(mu_PPB(i)%val)
+
+
+!----------------------------------------------------------
+! rate of primary production (NR=nutrient replete) (to uncomment if needed)
+!----------------------------------------------------------
+!   if (nscp_phy /=0) deAllocate(PPB_NR)
+!   ! deAllocate(PPB_NR(i)%val
+!----------------------------------------------------------
+!-- specific rate of primary production (NR = nutrient replete)
+!----------------------------------------------------------
+   if (nscp_phy /=0) deallocate(mu_PPB_NR,STAT=istat)
+   ! necessarily deallocate(mu_PPB_NR(i)%val)
+
+!----------------------------------------------------------
+!-- specic rate of community respiration (to uncomment if needed)
+!----------------------------------------------------------
+!  if (nscp_cell /=0) deAllocate(mu_resp)
+!  deAllocate(mu_resp(i)%val)
+
+!----------------------------------------------------------
+!-- specific rate of  nitrogenase activity (to uncomment if needed)
+!----------------------------------------------------------
+!   if (nphy_diaz /=0) deAllocate(mu_nit)
+!   !       deAllocate(mu_nit(i)%val)
+
+!----------------------------------------------------------
+!-- specific mineralisation rate (to uncomment if needed )
+!----------------------------------------------------------
+!  if (nscp_mod /=0) deAllocate(remin)
+!  !deAllocate(remin(i)%val
+
+!----------------------------------------------------------
+!  Allocations  of the temperature and salinities of the Eco3M model
+!----------------------------------------------------------
+! Temperature
+   deallocate(TEMP_BIO,stat = istat)
+   if (istat /=0) write(*,*) " problem with the deallocation of TEMP_BIO"
+
+! Salinity
+   deallocate(SAL_BIO,stat=istat)
+   if (istat /=0) write(*,*) " problem with the deallocation of SAL_BIO"
+
+! Allocation of the depth and of the grid of the model
+! Water depth (dynamical height?)
+  deallocate(bathymetry,stat=istat)
+  if (istat /=0) write(*,*) " problem with the deallocation of prof"
+
+! Grid cell altitude (reference to the bottom)
+  deallocate(depth_z,stat=istat)
+  if (istat /=0) write(*,*) " problem with the deallocation of depth_z"
+
+
+end subroutine deallocate_globvar_arrays
+#endif
+

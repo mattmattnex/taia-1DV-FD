@@ -1,0 +1,27 @@
+                                      ----------------
+                                       Eco3M Platform
+                                      ----------------
+
+The first version of the Eco3M platform (Eco3M_V1.0) has been developped by 
+Melika BAKLOUTI (Aix-Marseille University) and Vincent FAURE from 2004.
+It has benefited from a Cecill-B licence.
+
+References: Baklouti et al, Progress in Oceanography, 2006a and 2006b
+
+
+The second version of Eco3M (Eco3M_V2.0) has been developped by Melika Baklouti (Aix-Marseille University) and Nicolas Barrier (IRD) 
+
+Camille Mazoyer has created (2022) and manages since then the github site for Eco3M: https://github.com/Eco3M/Eco3M.git
+
+
+                      ----------------------------------------
+                    COUPLING of Eco3M with other numerical models
+                      ----------------------------------------
+
+* Coupling of Eco3M_V1.0 and MARS3D performed by Christel Pinazo & B Thouvenin (GOL) and M Baklouti and E Alekseenko (MENOR)
+
+* Coupling of Eco3M_V1.0 and NEMO3.2 performed by A Guyennon, T Arsouze, Cindy Lebaupin-Brossier, M. Baklouti
+
+* Coupling of Eco3M_V1.0 and NEMO3.6 performed by Rémi Pagès and Nicolas Barrier
+
+* Coupling of Eco3M_V2.0 and CROCO performed by Camille Mazoyer and Melika Baklouti (20201-2022)

@@ -1,0 +1,39 @@
+README by Melika Baklouti, jan 2023
+------------------------------
+Description of the directories:
+
+- ROOT_ECO3M is the root directory for ECO3M. It must be specified in the namelist file (located in CONFIG_ECO3M). 
+The default location of this root directory is one level above the directory of the executable code but this can be modified easily in the dedicated namelist. On the other hand,
+the architecture of the ECO3M files (see below) must be kept.
+
+
+
+                                                    ROOT_ECO3M
+                                                        |
+     ----------------------------------------------------------------------------------------
+      |               |                    |                        |                       |           
+    MAKE             SRC               CONFIG_PHY             CONFIG_ECO3M              OUTPUTS        
+                      |                                             |
+          ---------------------------                  ---------------------------------
+          |            |            |                  |        |       |              |
+      src_phy    src_eco3m  src_coupl_phy_eco3m   F_PROCESS   C_INI   INPUTS  PREPAR_CONFIG_ECO3M
+
+                       
+
+
+
+- MAKE: this directory contains the files allowing to build the model (Makefiles,...) and the executable program when Eco3M is used alone or as the main program when used with another code. Even if Eco3M is coupled with another code, the first compilation/execution step using the INI key (see CPP keys) has to be done in this directory using Makefile.ini in order to generate the different ".inc" files, and especially the "call.inc" file containing the model's equations. 
+If Eco3M is used alone or coupled with the default 1DV model (tke), the second compilation/execution step with the CALC cpp key has also to be done there using the Makfile.calc file (either the 0D or the 1D-3D versions). 
+
+
+- SRC: contains the source .F90 files of Eco3M-v2.0 (src_eco3M) and those of the default physical 1DV model (src_eco3m) or some other files necessary to couple both models (src_coupl_phy_eco3m).
+
+
+- CONFIG_ECO3M: contains all the files and directories related to the configuration of the biogeochemical used in Eco3M, namely:
+          -  F_PROCESS which is the library of biogeochemical functions
+          -  PREPAR_CONFIG_ECO3M in which the preparation of the configuration must be done,
+          -  C_INI containing the initial conditions read when Eco3M is the main program
+          -  INPUTS containing various inputs
+
+
+- CONFIG_PHY: contains all the files and directories related to the configuration of the default 1DV model.

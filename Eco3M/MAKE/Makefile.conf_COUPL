@@ -1,0 +1,89 @@
+# This is a settings file called by the Makefiles used for the compilation of 
+# ECO3M when coupled with a 1DV model (here with the defaut TKE 1DV model). 
+# It allows to set up all compilation settings such as: 
+#     names of directories and executable file / Fortran compiler and linker / precompilation keys / 
+#     compilation options
+
+#================================ Program names
+PROG_INI = ./eco3m_ini.exe
+PROG_CALC = ./tke_eco3m.exe
+DIR_CONFIG = ../CONFIG_ECO3M
+
+#================================ Directories 
+COMPIL                = ./Compile
+SRC_BIO_DIR	      = ../SRC/src_eco3m
+SRC_PHY_DIR	      = ../SRC/src_phy
+SRC_COUPL_PHY_BIO     = ../SRC/src_coupl_phy_eco3m/src_tke_eco3m
+SRC_BIO_CPP_DIR       = ${COMPIL}/petitf
+SRC_PHY_CPP_DIR	      = ${COMPIL}/petitf
+OBJ_BIO_DIR           = ${COMPIL}/objets
+OBJ_PHY_DIR           = ${COMPIL}/objets
+MOD_DIR               = ${COMPIL}/MODULS
+
+#================================ Fortran Compiler
+FC            = gfortran
+
+#================================ Linker
+LINKER        = gfortran   
+
+#================================ Preprocessor
+CPP           = cpp -nostdinc
+
+#================================ Included modules
+# the -I./ option is to include generated .inc files
+INC =  -I${MOD_DIR} -I./ -I${DIR_CONFIG}/F_PROCESS
+
+#================================ Precompilation keys
+# Definition of the available keys:
+
+# CALC      : Activates the calculation mode of ECO3M. Necessarily used in Makefile.calc file
+# COUPL     : To be used when ECO3M is coupled or forced by a physical model 
+# INI       : Activates the initialization mode of ECO3M. Necessarily used in Makefile.ini file
+# M0D-NCOUPL: For 0D uncoupled configurations 
+# M3D-NCOUPL: For uncoupled configurations based on 1D, 2D or 3D geometries 
+# NCOUPL    : To be used when ECO3M is used alone (neither coupled nor forced by a physical model) 
+# MODTEST   : allow intermediate displays in the testing phase
+# MODULE_CO2: must be activated when carbonate chemistry is also calculated
+# RESBIO_A  : outputs provided in ASCII format 
+# RESBIO_N  : outputs provided in NETCDF format
+# RGB       : to use the 3-wavelength bands light extinction model RGB (JM Andre)
+# SAVE_FLUX : to save the biogeochem. fluxes calcuated by ECO3M at mesh nodes defined in the Namelist
+# ECO3M_SUB : used when Eco3M is not the main program when coupled with another code
+
+# Keys used in both INI and CALC modes:
+##CPPFLAGS      = -P -CC -I../CONFIG_ECO3M -DRESBIO_A -DCOUPL -DRGB -DSAVE_FLUX  -nostdinc -DMODTEST -DINDIC 
+CPPFLAGS      = -P -CC -I../CONFIG_ECO3M -DRESBIO_A -DCOUPL -DRGB   -DMODTEST -nostdinc  
+
+# Additional keys for the INI mode
+CPPFLAGS_INI = $(CPPFLAGS)
+CPPFLAGS_INI += -DINI
+
+# Additional keys for the CALC mode
+CPPFLAGS_CALC = $(CPPFLAGS)
+CPPFLAGS_CALC += -DCALC -DVIMPLICIT -Dkey_tke_eco3m 
+
+#================================ Compilation options
+# standard compilation 
+COMP_OPTS = -O3 -g ${INC} -J${MOD_DIR} -static
+#
+# debug mode compilation
+#
+# debug with ifort :
+#COMP_OPTS = -O0 -g -CB -O0 -fpe0 -fp-model source -traceback -assume byterecl -p -pg -g -check bounds -check uninit -ftrapuv -warn -warn interface -fno-alias -fno-fnalias -debug -check all  -implicitnone -warn all -fp-stack-check -heap-arrays -gen-interface ${INC} -J${MOD_DIR} -static
+#
+# debug with gfortran :
+#
+#COMP_OPTS = -O0 -Wall -fcheck=all -g -fdefault-real-8 -fdefault-double-8 -fbacktrace \
+#       -fbounds-check -finit-real=nan \
+#       -Wline-truncation -Wcharacter-truncation \
+#       -ffpe-trap=invalid,zero,overflow -Wextra \
+#       -Wuninitialized \
+#        -finit-integer=8888-fimplicit-none  ${INC} -J${MOD_DIR} -static    
+
+
+#================================ Additional libraries if any
+LIBS = 
+
+#================================ Linking flag 
+LDFLAG = # -I${DIR_CONFIG}/F_PROCESS
+

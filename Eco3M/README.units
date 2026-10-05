@@ -1,0 +1,1 @@
+Eco3M can manage different units. For example, concentrations can be expressed in mol/l or in µmol/l. The only important thing is the consistency between the units for the initial conditions (given for example in the ~/CONFIG_ECO3M/C_INI/0D directory for a use in an uncoupled mode) and the units of the parameters that are in the param.txt file.

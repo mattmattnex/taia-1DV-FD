@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Fortran / compiled products
+*.o
+*.mod
+*.so
+*.exe
+a.out
+Eco3M/MAKE/Compile/
+Eco3M/MAKE/Compile_py/
+
+# Simulation outputs (regenerable, often large)
+experiments/*/output/
+Eco3M/OUTPUTS/
+*.nc
+*.mp4
+
+# Editors / OS
+.vscode/
+*.swp
+.DS_Store
+EOF
