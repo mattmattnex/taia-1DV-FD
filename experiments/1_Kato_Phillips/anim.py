@@ -140,7 +140,7 @@ ax.legend(loc='lower right')
 fig.tight_layout()
 
 writer = FFMpegWriter(fps=30, bitrate=3000)
-with writer.saving(fig, "/home/mnex/Desktop/1DV_FD/experiments/Kato_Phillips/ekman_velocities.mp4", dpi=150):
+with writer.saving(fig, "/home/mnex/Desktop/1DV_FD/experiments/1_Kato_Phillips/ekman_velocities.mp4", dpi=150):
     for i, (um, us, vm, vs) in enumerate(frames):
         line_u.set_xdata(um)
         fill_u.set_verts([envelope(um, us)])

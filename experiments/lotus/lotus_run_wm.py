@@ -37,8 +37,8 @@ for wm_tuple in [(False, False), (True, False), (False, True), (True, True)]:
         fname += '_tkewm'
 
     # --- Stochastic bool ---
-    cfg.temp_stochastic = False
-    cfg.salt_stochastic = False
+    cfg.temp_stochastic = True
+    cfg.salt_stochastic = True
     cfg.vel_stochastic  = True
 
     # --- EOS ---

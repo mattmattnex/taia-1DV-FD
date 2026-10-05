@@ -15,7 +15,7 @@ def momentum_equation_step(model: Model) -> None:
     us = state.us
     ua = state.ua
     azm   = state.az_m
-    sig_z = state.sig_z
+    sig_z = state.sig_z_m
     sig_h = state.sig_h
     
     # --- Parameters ---

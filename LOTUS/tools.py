@@ -4,7 +4,7 @@ import netCDF4 as nc
 import scipy as scp
 
 class LotusTools:
-    def __init__(self, output_folder = '/home/mnex/Desktop/1DV_FD/experiments/LOTUS/output/'):
+    def __init__(self, output_folder):
         self.output_folder = output_folder
         
         # ------------ Observations ------------

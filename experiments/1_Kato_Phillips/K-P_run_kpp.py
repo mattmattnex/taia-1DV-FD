@@ -33,17 +33,11 @@ for nz_val in [512, 256]:
         cfg.Ssurf = 38
         cfg.Sbotm = 38
 
-        # --- TKE model ---
-        cfg.tke_azm_min = 1.2e-4
-        cfg.tke_azt_min = 1.2e-5
-        cfg.tke_ebb = 67.83 # 3.75 else no wave
-        cfg.tke_pdl  = True
-
         # --- Finalization ---
-        cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/Kato_Phillips/output/"
-        cfg.file_name = f"K-P_tke_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
+        cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/1_Kato_Phillips/output/"
+        cfg.file_name = f"K-P_kpp_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
         cfg.var_to_save = ['temp', 'mld', 'N2']
-        cfg.finalize(print_summary=False)
+        cfg.finalize()
 
         # --- Model objects ---
         grid   = Grid(cfg)
@@ -56,7 +50,7 @@ for nz_val in [512, 256]:
         # --- Initializations ---
         phy.noise_LU_init(model)
 
-        mix.tke_init(model)
+        mix.kpp_init(model)
         mix.mld_init(model)
 
         eos.temperature_equation_init(model)
@@ -65,7 +59,7 @@ for nz_val in [512, 256]:
 
         savefile.init_file(model.state)
         savefile.save(model.state)
-
+                
         # ================== Main Loop ==================
         for kt in range(cfg.nt):
             prof.start()
@@ -76,7 +70,7 @@ for nz_val in [512, 256]:
             prof.mark("Wind")
             
              # --- Vertical Mixing ---
-            mix.tke_step(u_star, model)
+            mix.kpp_step(u_star, model)
             prof.mark("Mix")
             
              # --- Update mixing operators ---

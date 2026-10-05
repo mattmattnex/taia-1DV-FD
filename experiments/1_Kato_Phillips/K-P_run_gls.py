@@ -43,7 +43,7 @@ for mod_name in ['k-kl']:#, 'k-epsilon', 'k-omega', 'gen']:
             cfg.gls_azt_min = 1.2e-5
 
             # --- Finalization ---
-            cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/Kato_Phillips/output/"
+            cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/1_Kato_Phillips/output/"
             cfg.file_name = f"K-P_{cfg.gls_model}_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
             cfg.var_to_save = ['temp', 'mld', 'N2']
             cfg.finalize(print_summary=False)
