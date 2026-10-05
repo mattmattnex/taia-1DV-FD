@@ -15,7 +15,7 @@ for nz_val in [512, 256]:
         cfg.nz   = nz_val
         cfg.Hmin = 1.0
         cfg.Hmax = 50.0
-        cfg.lat  = 0.0
+        cfg.lat  = 34.0
         cfg.device = "cuda:0"
 
         # --- Time ---

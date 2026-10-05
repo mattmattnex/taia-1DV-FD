@@ -16,7 +16,6 @@ Eco3M/MAKE/Compile_py/
 # Simulation outputs (regenerable, often large)
 experiments/*/output/
 Eco3M/OUTPUTS/
-*.nc
 *.mp4
 
 # Editors / OS

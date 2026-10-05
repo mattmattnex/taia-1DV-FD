@@ -47,8 +47,8 @@ for model_conf in ['PDE', 'SPDE-noWM', 'SPDE']:
     cfg.kpp_azt_min = 1e-4
                 
     # --- Finalization ---
-    cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/LOTUS/output/long/"
-    cfg.file_name = f"lotus_{model_conf}.nc"
+    cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/0_tests/output/"
+    cfg.file_name = f"longtest_{model_conf}.nc"
     cfg.var_to_save = ['ue']
     cfg.finalize()
 
