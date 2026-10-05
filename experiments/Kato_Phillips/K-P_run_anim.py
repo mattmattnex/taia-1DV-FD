@@ -113,8 +113,6 @@ for kt in range(cfg.nt):
     if kt%5 == 0:
         print(prof.format_step(kt, cfg.nt))
 
-print(prof.format_summary())
-
 # ================== MP4 animation ==================
 frames = np.stack(frames)                    # (nframes, 4, nz)
 nz = frames.shape[-1]
