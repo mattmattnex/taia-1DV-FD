@@ -33,4 +33,4 @@ def noise_LU_step(model:Model):
     state.sig_z_t[:] = grd.to_c(szt)
     state.sig_h[:] = sh
     state.dB_w[:] = cfg.sqrt_dt * torch.randn(cfg.ne, cfg.nz+1, 1, **cfg.farr_kwargs)
-    state.dB_c[:] = (state.dB_w[:, :-1] + state.dB_w[:, 1:]) / 2**0.5 # unit variance, correlated with both faces, design choice
+    state.dB_c[:] = (state.dB_w[:, :-1] + state.dB_w[:, 1:]) / 2**0.5

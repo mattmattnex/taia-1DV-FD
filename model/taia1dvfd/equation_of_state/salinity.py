@@ -1,5 +1,5 @@
 import torch
-from taia1dvfd.core import Model
+from taia1dvfd.core import Model, pcr_solve
 
 def salinity_equation_init(model: Model, salt_init: torch.Tensor | None = None):
     zc = model.grid.z_c
@@ -54,7 +54,7 @@ def salinity_equation_step(model: Model,
     Id = torch.eye(nz, **fkw)
     Lop = Id - dt*d_aztdz
     Dz = ops.d_dz_c
-        
+
     # --- RHS ---
     Fsurf = 0.0
     Fbotm = 0.0
@@ -80,4 +80,6 @@ def salinity_equation_step(model: Model,
         rhs[:, -1,  :] = salt_botm.unsqueeze(-1)
     
     # --- Solver ---
-    state.salt[:] = torch.linalg.solve(Lop, rhs)
+    # state.salt[:] = torch.linalg.solve(Lop, rhs)
+    # state.salt[:] = thomas_solve(Lop, rhs)
+    state.salt[:] = pcr_solve(Lop, rhs)

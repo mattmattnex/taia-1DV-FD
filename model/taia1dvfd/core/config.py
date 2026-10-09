@@ -86,8 +86,6 @@ class Config:
     gls_tke_min:  float = 1e-6
     gls_diss_min: float = 1e-12
     gls_wave_mix: bool  = True
-
-    
     _eps_sf: float = 1e-20
     _lim_sf: float = 1e10
     
@@ -102,7 +100,10 @@ class Config:
         "KC": {"c":  [6.00, 0.32, 0.000, 0.000, 0.000, 0.000], "cb": [3.728, 0.70, 0.70, 0.00, 0.20,   0.6102]},
         "CA": {"c":  [5.00, 0.80, 1.968, 1.136, 0.000, 0.400], "cb": [5.95,  0.60, 1.00, 0.00, 0.3333, 0.72 ]},
     }
-
+    
+    # --- MLD ---
+    mld_l_smooth: float = 1.0    # smoothing length for N2 before peak detection [m]
+    
     # --- Equation of state --- #
     eos_T0: float = 20   # Reference temperature (°C)
     eos_S0: float = 38   # Reference Salinity (PSU)

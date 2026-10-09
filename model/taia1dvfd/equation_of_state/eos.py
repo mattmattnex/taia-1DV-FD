@@ -1,9 +1,8 @@
 import torch
-import torch.nn.functional as F
 from taia1dvfd.core import Model
 
 def eos_init(model: Model):
-    model.state.N2[:] = 0.0
+    eos_step(model)
 
 def eos_step(model: Model):
     _density(model)

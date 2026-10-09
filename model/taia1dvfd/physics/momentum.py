@@ -1,5 +1,5 @@
 import torch
-from taia1dvfd.core import Model
+from taia1dvfd.core import Model, pcr_solve
 
 def momentum_equation_init(model: Model) -> None:
     pass
@@ -23,7 +23,6 @@ def momentum_equation_step(model: Model) -> None:
     ckw = cfg.carr_kwargs
     dz = grd.dz
     dt = cfg.dt
-    sqrt_dt = cfg.sqrt_dt
     cdrho = cfg.cdrho
     nz = cfg.nz
     f = cfg.f
@@ -74,6 +73,5 @@ def momentum_equation_step(model: Model) -> None:
     rhs[:, -1, :] += dt * Fbotm / (0.5 * dz)
 
     # Solve L ue^{n+1} = RHS
-    ue_new = torch.linalg.solve(L, rhs)
-
-    model.state.ue[:] = ue_new
+    # model.state.ue[:] = torch.linalg.solve(L, rhs)
+    model.state.ue[:] = pcr_solve(L, rhs)

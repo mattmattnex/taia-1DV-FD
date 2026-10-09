@@ -1,6 +1,6 @@
 import math
 import torch
-from taia1dvfd.core import Model
+from taia1dvfd.core import Model, pcr_solve
 
 def gls_init(model: Model):
     cfg   = model.config
@@ -153,7 +153,8 @@ def _tke_equation(u_star, tke_b, diss_b, prod, model: Model):
         _set_neumann(L, RHS,  1,  0, 0.0, dt, dz)
         _set_neumann(L, RHS, -2, -1, 0.0, dt, dz)
 
-    tke_new = torch.linalg.solve(L, RHS)
+    # tke_new = torch.linalg.solve(L, RHS)
+    tke_new = pcr_solve(L, RHS)
     return torch.clamp(tke_new, min=p.tke_min)
 
 def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
@@ -205,7 +206,8 @@ def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
         _set_neumann(L, RHS,  1,  0, flx_s, dt, dz)
         _set_neumann(L, RHS, -2, -1, flx_b, dt, dz)
 
-    psi_new = torch.linalg.solve(L, RHS)
+    # psi_new = torch.linalg.solve(L, RHS)
+    psi_new = pcr_solve(L, RHS)
     psi_new = torch.clamp(psi_new, min=cfg.gls_psi_min)
 
     # --- Galperin (1988) limiter, applied in psi space [Warner Eq. 56] ---

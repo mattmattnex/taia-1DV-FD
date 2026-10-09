@@ -1,5 +1,5 @@
 import torch
-from taia1dvfd.core import Model, Grid, Config
+from taia1dvfd.core import Model, Grid, Config, pcr_solve
 
 def tke_init(model: Model) -> None:
     state = model.state
@@ -78,7 +78,8 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     L[:, -1, -1]  = 1.0
     rhs[:, -1, :] = emin
 
-    en_new = torch.linalg.solve(L, rhs)
+    # en_new = torch.linalg.solve(L, rhs)
+    en_new = pcr_solve(L, rhs)
     en_new = torch.clamp(en_new, min=emin)
     state.tke[:] = en_new
 
@@ -101,7 +102,7 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     
     state.az_m[:] = azm_new
     state.az_t[:] = azt_new
-        
+
 def _mixing_lengths(en: torch.Tensor, N2: torch.Tensor, cfg: Config, grd: Grid):
     nz       = cfg.nz
     dz       = grd.dz

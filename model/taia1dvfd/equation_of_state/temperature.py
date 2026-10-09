@@ -1,5 +1,5 @@
 import torch
-from taia1dvfd.core import Model
+from taia1dvfd.core import Model, pcr_solve
 
 def temperature_equation_init(model: Model, temp_init: torch.Tensor | None = None):
     zc = model.grid.z_c
@@ -80,4 +80,6 @@ def temperature_equation_step(model: Model,
         rhs[:, -1,  :] = temp_botm.unsqueeze(-1)
     
     # --- Solver ---
-    state.temp[:] = torch.linalg.solve(Lop, rhs)
+    # state.temp[:] = torch.linalg.solve(Lop, rhs)
+    # state.temp[:] = thomas_solve(Lop, rhs)
+    state.temp[:] = pcr_solve(Lop, rhs)
