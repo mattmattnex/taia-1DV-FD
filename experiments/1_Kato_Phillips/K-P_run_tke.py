@@ -17,7 +17,7 @@ for nz_val in [512, 256]:
         cfg.Hmax = 50.0
         cfg.lat  = 0.0
         cfg.device = "cuda:0"
-
+        
         # --- Time ---
         cfg.dt   = dt_val
         cfg.tend = 3600.0 * 30
@@ -25,7 +25,7 @@ for nz_val in [512, 256]:
         # --- Stochastic bool ---
         cfg.temp_stochastic = False
         cfg.salt_stochastic = False
-        cfg.vel_stochastic  = True
+        cfg.vel_stochastic  = False
 
         # --- EOS ---
         cfg.Tsurf  = 13
@@ -36,14 +36,12 @@ for nz_val in [512, 256]:
         # --- TKE model ---
         cfg.tke_azm_min = 1.2e-4
         cfg.tke_azt_min = 1.2e-5
-        cfg.tke_ebb = 67.83 # 3.75 else no wave
-        cfg.tke_pdl  = True
 
         # --- Finalization ---
         cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/1_Kato_Phillips/output/"
-        cfg.file_name = f"K-P_tke_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
+        cfg.file_name = f"tke_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
         cfg.var_to_save = ['temp', 'mld', 'N2']
-        cfg.finalize(print_summary=False)
+        cfg.finalize()
 
         # --- Model objects ---
         grid   = Grid(cfg)
@@ -62,6 +60,7 @@ for nz_val in [512, 256]:
         eos.temperature_equation_init(model)
         eos.salinity_equation_init(model)
         eos.eos_init(model)
+        eos.eos_step(model)
 
         savefile.init_file(model.state)
         savefile.save(model.state)
@@ -84,20 +83,26 @@ for nz_val in [512, 256]:
             operators.update_tracers_diffusion(state.az_t)
             prof.mark("Ops")
             
-            # --- EOS ---
+            # --- Noise ---
+            phy.noise_LU_step(model)
+            prof.mark("Noiz")
+
+            # --- Temp Sal ---
             eos.temperature_equation_step(model)
             eos.salinity_equation_step(model)
+            prof.mark("T-S")
+            
+            # --- Physics and stochastic
+            phy.momentum_equation_step(model)
+            prof.mark("Phy")
+
+            # --- EOS ---
             eos.eos_step(model)
             prof.mark("eos")
 
             # --- MLD ---
             mix.mld_step(model)
             prof.mark("mld")
-
-            # --- Physics and stochastic
-            phy.noise_LU_step(model)        
-            phy.momentum_equation_step(model)
-            prof.mark("Phy")
             
             # --- Update time ---
             model.state.time += model.config.dt

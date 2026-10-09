@@ -7,13 +7,13 @@ def tke_init(model: Model) -> None:
 
     state.az_m[:]  = cfg.tke_azm_min
     state.az_t[:]  = cfg.tke_azt_min
+    state.tke[:]   = cfg.tke_min
     state.dissl[:] = cfg.tke_min ** 0.5 / cfg.tke_rmxl_min
 
 def tke_step(u_star: torch.Tensor, model: Model) -> None:
     state = model.state
     cfg   = model.config
     grd   = model.grid
-    ops   = model.operators
 
     en    = state.tke
     azm   = state.az_m
@@ -33,9 +33,15 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     emin0 = cfg.tke_surf_min
 
     # --- Shear ---
-    u_shear = (state.ue + state.us) if cfg.tke_wave_mix else state.ue
-    dudz = ops.d_dz_w @ u_shear    
-    sh2  = azm * (dudz.real ** 2 + dudz.imag ** 2)
+    u_tot  = (state.ue + state.us) if cfg.tke_wave_mix else state.ue
+    du     = state.ue[:, :-1] - state.ue[:, 1:]               # (ne, nz) differences between face nodes
+    dut    = u_tot[:, :-1]    - u_tot[:, 1:]
+    a_half = 0.5 * (azm[:, :-1] + azm[:, 1:])                 # same a_{i+1/2} as the momentum operator
+    P_c    = a_half * (du * dut.conj()).real / grd.dz**2      # exactly what d_azmdz removes from u
+    sh2    = grd.to_w(P_c)                     # production at faces
+    
+    P_c_E = a_half * (du * du.conj()).real / grd.dz**2
+    sh2_E = grd.to_w(P_c_E) # for Richardson number
 
     # ====================
     # --- TKE equation ---
@@ -87,20 +93,15 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     azm_new = torch.clamp(azm_raw, min=cfg.tke_azm_min)
     
     # --- Prandtl number ---
-    if cfg.tke_pdl:
-        Ri   = N2 * azm_new / (sh2 + cfg.tke_bshear)
-        Ri   = torch.where(N2 <= 0.0, torch.zeros_like(Ri), Ri)
-        pdlr = (cfg.tke_ri_cri / Ri.clamp(min=cfg.tke_ri_cri)).clamp(min=0.1)        
-    else:
-        pdlr = 1.0
+    Ri   = N2 * azm_new / (sh2_E + cfg.tke_bshear)
+    Ri   = torch.where(N2 <= 0.0, torch.zeros_like(Ri), Ri)
+    pdlr = (cfg.tke_ri_cri / Ri.clamp(min=cfg.tke_ri_cri)).clamp(min=0.1)        
 
     azt_new = (azm_raw * pdlr).clamp(min=cfg.tke_azt_min)
     
     state.az_m[:] = azm_new
     state.az_t[:] = azt_new
-    
-
-    
+        
 def _mixing_lengths(en: torch.Tensor, N2: torch.Tensor, cfg: Config, grd: Grid):
     nz       = cfg.nz
     dz       = grd.dz

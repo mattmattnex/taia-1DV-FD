@@ -11,7 +11,7 @@ for nz_val in [512, 256]:
     for dt_val in [36, 360, 3600]:
         cfg = Config()
 
-        cfg.ne   = 500
+        cfg.ne   = 50
         cfg.nz   = nz_val
         cfg.Hmin = 1.0
         cfg.Hmax = 50.0
@@ -23,8 +23,8 @@ for nz_val in [512, 256]:
         cfg.tend = 3600.0 * 30
 
         # --- Stochastic bool ---
-        cfg.temp_stochastic = False
-        cfg.salt_stochastic = False
+        cfg.temp_stochastic = True
+        cfg.salt_stochastic = True
         cfg.vel_stochastic  = True
 
         # --- EOS ---
@@ -35,7 +35,7 @@ for nz_val in [512, 256]:
 
         # --- Finalization ---
         cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/1_Kato_Phillips/output/"
-        cfg.file_name = f"K-P_kpp_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
+        cfg.file_name = f"kpp_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
         cfg.var_to_save = ['temp', 'mld', 'N2']
         cfg.finalize()
 

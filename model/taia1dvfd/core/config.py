@@ -54,25 +54,21 @@ class Config:
     # --- TKE closure ---
     tke_ediff:     float = 0.1        # rn_ediff : C_k, viscosity coef.  avm = Ck * l * sqrt(e)
     tke_ediss:     float = 0.7        # rn_ediss : C_eps, dissipation coef.
-    tke_ebb:       float = 67.83      # rn_ebb   : surface TKE input coef.
-    tke_efr:       float = 0.05       # fraction of surface TKE that penetrates
-    tke_htau:      float = 10.0       # e-folding depth of TKE penetration  [m]
+    tke_ebb:       float = 3.75       # rn_ebb   : surface TKE input coef.
     tke_min:       float = 1.0e-6     # rn_emin  : minimum interior TKE   [m2/s2]
     tke_surf_min:  float = 1.0e-4     # rn_emin0 : minimum surface TKE    [m2/s2]
     tke_bshear:    float = 1.0e-20    # rn_bshear: background shear       [s-2]
     tke_azm_floor: float = 2.0e-5     # floor on avm in TKE diffusion solve
     tke_rmxl0:     float = 0.04
     tke_N2_min:    float = 1e-14
-    tke_pdl:       bool  = True
-    tke_wave_mix:  bool  = True
     tke_azm_min:   float = 1.2e-4
     tke_azt_min:   float = 1.2e-5
+    tke_wave_mix:  bool  = True
 
     # --- GLS ---
     gls_model: str = "k-kl"
     gls_stabf: str = "CA"
     gls_bc:    str = "dirichlet"
-    gls_wave_mix: bool  = True
     gls_vonKar:   float = 0.4
     gls_galp:     float = 0.53
     gls_chk:      float = 1400 / 9.81
@@ -89,6 +85,8 @@ class Config:
     gls_azt_min:  float = 1.2e-5
     gls_tke_min:  float = 1e-6
     gls_diss_min: float = 1e-12
+    gls_wave_mix: bool  = True
+
     
     _eps_sf: float = 1e-20
     _lim_sf: float = 1e10
@@ -112,14 +110,14 @@ class Config:
     beta_S: float = 1e-3 # Haline contraction coefficient
     
     # --- Salinity model ---
-    salt_bc_top: str = "dirichlet"
+    salt_bc_top: str = "neumann"
     salt_bc_btm: str = "neumann"
     salt_stochastic: bool = False
     Ssurf:  float = 38.0 # Initial surface S
     Sbotm:  float = 38.5 # Initial bottom S
     
     # --- Temperature model ---
-    temp_bc_top: str = "dirichlet"
+    temp_bc_top: str = "neumann"
     temp_bc_btm: str = "neumann"
     temp_stochastic: bool = False
     Tsurf:  float = 20.5 # Initial surface T

@@ -7,17 +7,17 @@ import taia1dvfd.physics as phy
 import taia1dvfd.mixing  as mix
 import taia1dvfd.equation_of_state as eos
 
-for mod_name in ['k-kl']:#, 'k-epsilon', 'k-omega', 'gen']:
-    for nz_val in [512]:#, 256]:
-        for dt_val in [36]:#, 360, 3600]:
+for mod_name in ['k-kl', 'k-epsilon', 'k-omega', 'gen']:
+    for nz_val in [512, 256]:
+        for dt_val in [36, 360, 3600]:
 
             cfg = Config()
 
-            cfg.ne   = 500
+            cfg.ne   = 50
             cfg.nz   = nz_val
             cfg.Hmin = 1.0
             cfg.Hmax = 50.0
-            cfg.lat  = 0.0
+            cfg.lat  = 34.0
             cfg.device = "cuda:0"
 
             # --- Time ---
@@ -25,8 +25,8 @@ for mod_name in ['k-kl']:#, 'k-epsilon', 'k-omega', 'gen']:
             cfg.tend = 3600.0 * 30
 
             # --- Stochastic bool ---
-            cfg.temp_stochastic = False
-            cfg.salt_stochastic = False
+            cfg.temp_stochastic = True
+            cfg.salt_stochastic = True
             cfg.vel_stochastic  = True
 
             # --- EOS ---
@@ -44,9 +44,9 @@ for mod_name in ['k-kl']:#, 'k-epsilon', 'k-omega', 'gen']:
 
             # --- Finalization ---
             cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/1_Kato_Phillips/output/"
-            cfg.file_name = f"K-P_{cfg.gls_model}_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
+            cfg.file_name = f"{cfg.gls_model}_dt{cfg.dt}_nz{cfg.nz}_ne{cfg.ne}.nc"
             cfg.var_to_save = ['temp', 'mld', 'N2']
-            cfg.finalize(print_summary=False)
+            cfg.finalize()
 
             # --- Model objects ---
             grid   = Grid(cfg)
