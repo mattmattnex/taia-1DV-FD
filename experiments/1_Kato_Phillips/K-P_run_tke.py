@@ -23,8 +23,8 @@ for nz_val in [512, 256]:
         cfg.tend = 3600.0 * 30
 
         # --- Stochastic bool ---
-        cfg.temp_stochastic = True
-        cfg.salt_stochastic = True
+        cfg.temp_stochastic = False
+        cfg.salt_stochastic = False
         cfg.vel_stochastic  = True
 
         # --- EOS ---

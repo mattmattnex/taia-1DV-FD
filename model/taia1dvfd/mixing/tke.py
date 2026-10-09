@@ -116,7 +116,7 @@ def _mixing_lengths(en: torch.Tensor, N2: torch.Tensor, cfg: Config, grd: Grid):
 
     # --- forward sweep (surface -> bottom) ---
     mxl_fwd = mxl.clone()
-    mxl_fwd[:, 0, :] = cfg.tke_rmxl0
+    mxl_fwd[:, 0, :] = cfg.tke_rmxl0 + cfg.Hmin
     lup = torch.cummin(mxl_fwd - x, dim=1)[0] + x
 
     # --- backward sweep (bottom -> surface) ---

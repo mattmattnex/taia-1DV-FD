@@ -214,10 +214,12 @@ def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
         2.0 * tke_new / torch.clamp(N2, min=cfg.gls_N2_min))
     psi_lim = (p.cm0 ** p.rp) * (tke_new ** p.rm) * (L_lim ** p.rn)
 
-    if p.rn < 0:   # psi decreases with l  ->  cap on l  <=>  floor on psi
-        psi_new = torch.where(stable, torch.maximum(psi_new, psi_lim), psi_new)
+    interior = torch.zeros_like(stable); interior[:, 2:-2] = True
+    mask = stable & interior
+    if p.rn < 0:
+        psi_new = torch.where(mask, torch.maximum(psi_new, psi_lim), psi_new)
     else:
-        psi_new = torch.where(stable, torch.minimum(psi_new, psi_lim), psi_new)
+        psi_new = torch.where(mask, torch.minimum(psi_new, psi_lim), psi_new)
 
     return psi_new
 
@@ -249,6 +251,7 @@ def _get_psi_bc(u_star, tke, model: Model):
     cfg = model.config
     p   = cfg.gls
     dz  = model.grid.dz
+    d0 = cfg.Hmin
 
     cm0    = p.cm0
     vonKar = cfg.gls_vonKar
@@ -259,10 +262,10 @@ def _get_psi_bc(u_star, tke, model: Model):
     z0_s = torch.clamp(cfg.gls_chk * u_star ** 2, min=cfg.gls_zos_min)
     k_s0, k_s1 = tke[:, 0, :], tke[:, 1, :]
 
-    psi_s0 = (cm0 ** rp) * (k_s0 ** rm) * (vonKar *  z0_s      ) ** rn
-    psi_s1 = (cm0 ** rp) * (k_s1 ** rm) * (vonKar * (z0_s + dz)) ** rn
-
-    lgth_s = vonKar * (z0_s + 0.5 * dz)
+    psi_s0 = cm0**rp * k_s0**rm * (vonKar * (z0_s + d0     ))**rn
+    psi_s1 = cm0**rp * k_s1**rm * (vonKar * (z0_s + d0 + dz))**rn
+    lgth_s = vonKar * (z0_s + d0 + 0.5 * dz)
+    
     k_sh   = 0.5 * (k_s0 + k_s1)
     flx_s  = cff_flx * (k_sh ** (rm + 0.5)) * (lgth_s ** rn)
 
@@ -285,7 +288,7 @@ def _get_psi_bc(u_star, tke, model: Model):
 def _get_Fwall(tke, diss, model: Model):
     """MY wall proximity function, k-kl only.  [Warner Eq. 20]
 
-      F = 1 + E2 (L / kappa)^2 (1/d_s + 1/d_b)^2
+      F = 1 + E2 (L / kappa)^2 (1/d_s)^2
 
     with d_s, d_b the distances to the surface and bottom w-points.
     """
@@ -295,8 +298,8 @@ def _get_Fwall(tke, diss, model: Model):
     nz  = cfg.nz
 
     dz  = grd.dz
-    x_w = torch.arange(nz + 1, **cfg.farr_kwargs).view(1, nz + 1, 1) * dz
-    d_s = torch.clamp(x_w,           min=cfg.gls_zos_min)
+    d_s = cfg.Hmin + torch.arange(nz + 1, **cfg.farr_kwargs).view(1, nz + 1, 1) * dz
+    d_s = d_s + cfg.gls_zos_min            # include roughness, consistent with the BCs
 
     L = torch.clamp(p.cm0 ** 3 * tke ** 1.5 / diss, min= cfg.gls_lsc_min)
     F = 1.0 + 1.33 * (L / cfg.gls_vonKar) ** 2 * (1.0 / d_s) ** 2
