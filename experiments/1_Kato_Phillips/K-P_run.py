@@ -32,7 +32,7 @@ for closure in CLOSURES:
             cfg.tend = 3600.0 * 30
 
             # --- Stochastic bool ---
-            cfg.temp_stochastic = True
+            cfg.temp_stochastic = False
             cfg.salt_stochastic = False
             cfg.vel_stochastic  = True
             
@@ -97,7 +97,6 @@ for closure in CLOSURES:
                 # --- Wind forcing ---
                 model.state.ua[:] = 0.01 / cfg.sqrt_cdrho
                 u_star = phy.compute_ustar(model).squeeze(-1)
-                prof.mark("Wind")
                 
                 # --- Vertical Mixing ---
                 if closure in mix._GLS_CLOSURES:
@@ -109,11 +108,10 @@ for closure in CLOSURES:
                 # --- Update mixing operators ---
                 operators.update_momentum_diffusion(state.az_m)
                 operators.update_tracers_diffusion(state.az_t)
-                prof.mark("Ops")
                 
                 # --- Noise ---
                 phy.noise_LU_step(model)
-                prof.mark("Noiz")
+                prof.mark("Sig")
 
                 # --- Temp Sal ---
                 eos.temperature_equation_step(model)
@@ -126,7 +124,6 @@ for closure in CLOSURES:
 
                 # --- EOS ---
                 eos.eos_step(model)
-                prof.mark("eos")
 
                 # --- MLD ---
                 mix.mld_step(model)
