@@ -17,15 +17,15 @@ for nz_val in [512, 256]:
         cfg.Hmax = 50.0
         cfg.lat  = 0.0
         cfg.device = "cuda:0"
-        
+
         # --- Time ---
         cfg.dt   = dt_val
         cfg.tend = 3600.0 * 30
 
         # --- Stochastic bool ---
-        cfg.temp_stochastic = False
-        cfg.salt_stochastic = False
-        cfg.vel_stochastic  = False
+        cfg.temp_stochastic = True
+        cfg.salt_stochastic = True
+        cfg.vel_stochastic  = True
 
         # --- EOS ---
         cfg.Tsurf  = 13

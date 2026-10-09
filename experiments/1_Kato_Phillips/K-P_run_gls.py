@@ -13,11 +13,11 @@ for mod_name in ['k-kl', 'k-epsilon', 'k-omega', 'gen']:
 
             cfg = Config()
 
-            cfg.ne   = 50
+            cfg.ne   = 10
             cfg.nz   = nz_val
             cfg.Hmin = 1.0
             cfg.Hmax = 50.0
-            cfg.lat  = 34.0
+            cfg.lat  = 0.0
             cfg.device = "cuda:0"
 
             # --- Time ---
@@ -25,9 +25,9 @@ for mod_name in ['k-kl', 'k-epsilon', 'k-omega', 'gen']:
             cfg.tend = 3600.0 * 30
 
             # --- Stochastic bool ---
-            cfg.temp_stochastic = True
-            cfg.salt_stochastic = True
-            cfg.vel_stochastic  = True
+            cfg.temp_stochastic = False
+            cfg.salt_stochastic = False
+            cfg.vel_stochastic  = False
 
             # --- EOS ---
             cfg.Tsurf  = 13

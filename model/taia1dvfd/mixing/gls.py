@@ -31,20 +31,19 @@ def gls_step(u_star, model: Model):
     tke_old = state.tke.clone()
     psi_old = state.psi.clone()
 
-    M2 = _compute_M2(model)
-    state.M2[:] = M2
-
+    # --- Production/dissipation ---
+    P_w, M2_E = _compute_production(model)
     diss_old = _compute_dissipation(tke_old, psi_old, model)
 
     # --- Solve k, then psi ---
-    tke_new = _tke_equation(u_star, tke_old, diss_old, model)
-    psi_new = _psi_equation(u_star, tke_old, psi_old, diss_old, tke_new, model)
+    tke_new = _tke_equation(u_star, tke_old, diss_old, P_w, model)
+    psi_new = _psi_equation(u_star, tke_old, psi_old, diss_old, P_w, tke_new, model)
 
     # --- Diagnostics from the new state ---
     diss_new = _compute_dissipation(tke_new, psi_new, model)
     lsc_new  = _compute_length_scale(tke_new, diss_new, model)
 
-    Akv_new, Akt_new = _compute_mixing(tke_new, diss_new, M2, model)
+    Akv_new, Akt_new = _compute_mixing(tke_new, diss_new, M2_E, model)
 
     state.tke[:]  = tke_new
     state.psi[:]  = psi_new
@@ -57,17 +56,15 @@ def gls_step(u_star, model: Model):
 # =====================================================================
 #  Internal functions
 # =====================================================================
-
-def _compute_M2(model: Model):
-    cfg = model.config
-    ops = model.operators
-    state = model.state
-
-    u_shear = (model.state.ue + model.state.us) if cfg.gls_wave_mix else state.ue
-    dudz = ops.d_dz_w @ u_shear 
-    M2 = dudz.real ** 2 + dudz.imag ** 2
-
-    return torch.clamp(M2, min=cfg.gls_M2_min)
+def _compute_production(model):
+    cfg, grd, st = model.config, model.grid, model.state
+    u_tot  = (st.ue + st.us) if cfg.gls_wave_mix else st.ue
+    du     = st.ue[:, :-1] - st.ue[:, 1:]
+    dut    = u_tot[:, :-1] - u_tot[:, 1:]
+    a_half = 0.5 * (st.az_m[:, :-1] + st.az_m[:, 1:])
+    P_w  = grd.to_w(a_half * (du * dut.conj()).real / grd.dz**2).clamp(min=0.0)   # k & psi production
+    M2_E = grd.to_w((du * du.conj()).real / grd.dz**2).clamp(min=cfg.gls_M2_min)  # alpha_m only
+    return P_w, M2_E
 
 def _compute_dissipation(tke, psi, model: Model):
     """eps = cm0^(3+p/n) k^(1.5+m/n) psi^(-1/n)."""
@@ -108,12 +105,10 @@ def _build_operator(sink, sigma, model: Model):
     L[:, jk, jk    ] +=  dt * (a_up + a_lw)
     return L
 
-
 def _set_dirichlet(L, RHS, row, value):
     L[:, row, :]   = 0.0
     L[:, row, row] = 1.0
     RHS[:, row, :] = value
-
 
 def _set_neumann(L, RHS, row, nbr, flux, dt, dz):
     """Decouple `row` from its boundary neighbour `nbr` and inject `flux`."""
@@ -121,20 +116,17 @@ def _set_neumann(L, RHS, row, nbr, flux, dt, dz):
     L[:, row, nbr]  = 0.0
     RHS[:, row, :] += dt * flux / dz
 
-
-def _tke_equation(u_star, tke_b, diss_b, model: Model):
+def _tke_equation(u_star, tke_b, diss_b, prod, model: Model):
     cfg = model.config
     p   = cfg.gls
     dt  = cfg.dt
     dz  = model.grid.dz
 
     N2   = model.state.N2
-    M2   = model.state.M2
-    az_m = model.state.az_m
     az_t = model.state.az_t
 
     # --- Sources / sinks ---
-    P   =  az_m * M2                       # shear production
+    P   =  prod                            # shear production
     P_b = -az_t * N2                       # buoyancy term
 
     B_expl = torch.clamp(P_b, min=0.0)     # source (unstable)  -> explicit RHS
@@ -164,16 +156,13 @@ def _tke_equation(u_star, tke_b, diss_b, model: Model):
     tke_new = torch.linalg.solve(L, RHS)
     return torch.clamp(tke_new, min=p.tke_min)
 
-
-def _psi_equation(u_star, tke_b, psi_b, diss_b, tke_new, model: Model):
+def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
     cfg = model.config
     p   = cfg.gls
     dt  = cfg.dt
     dz  = model.grid.dz
 
     N2   = model.state.N2
-    M2   = model.state.M2
-    az_m = model.state.az_m
     az_t = model.state.az_t
 
     # --- Coefficients (before values, NEMO/ROMS convention) ---
@@ -181,7 +170,7 @@ def _psi_equation(u_star, tke_b, psi_b, diss_b, tke_new, model: Model):
     ratio   = psi_b * inv_tke
 
     # Shear production
-    P = p.beta1 * ratio * az_m * M2
+    P = p.beta1 * ratio * prod
 
     # Buoyancy: c3- on the stable part, c3+ on the unstable part
     B = -ratio * az_t * (p.beta3m * torch.clamp(N2, min=0.0)
@@ -293,7 +282,6 @@ def _get_psi_bc(u_star, tke, model: Model):
             torch.clamp(psi_b0, min=psi_min), torch.clamp(psi_b1, min=psi_min),
             flx_s, flx_b)
 
-
 def _get_Fwall(tke, diss, model: Model):
     """MY wall proximity function, k-kl only.  [Warner Eq. 20]
 
@@ -315,7 +303,6 @@ def _get_Fwall(tke, diss, model: Model):
 
     return torch.clamp(F, max=1e4)
 
-
 # =====================================================================
 #  Stability functions
 # =====================================================================
@@ -335,14 +322,12 @@ def _get_c_mu(model: Model, a_m, a_n):
     c_mu_prim = torch.clamp(c_mu_prim, min=cfg.gls_cmu_prim_min)
     return c_mu, c_mu_prim
 
-
 def _alpha_m_max(model: Model, a_n):
     cfg = model.config
     p   = cfg.gls
     num = p._lam0 + p._lam1 * a_n + p._lam2 * a_n ** 2 + p._lam3 * a_n ** 3
     den = p._lam4 + p._lam5 * a_n + p._lam6 * a_n ** 2
     return torch.clamp(num / (den + cfg._eps_sf), min=0.0, max=cfg._lim_sf)
-
 
 def _get_alpha_mn(tke, diss, M2, model: Model):
     """alpha_m = (k/eps)^2 M^2,  alpha_n = (k/eps)^2 N^2, with limiters."""
@@ -357,7 +342,6 @@ def _get_alpha_mn(tke, diss, M2, model: Model):
     a_n = torch.clamp(a_n, max=cfg._lim_sf, min=p.alpha_n_min)
     a_m = torch.clamp(a_m, max=_alpha_m_max(model, a_n))
     return a_m, a_n
-
 
 # =====================================================================
 #  Initializing
@@ -448,7 +432,5 @@ def _model_parameters(model: Model):
     cfg.gls.beta3p  = prm['beta3p']
     cfg.gls.beta3m  = prm['beta3m'][cfg.gls_stabf]
 
-    # cfg.gls.tke_min  = prm['tke_min']
-    # cfg.gls.diss_min = prm['diss_min']
     cfg.gls.tke_min  = cfg.gls_tke_min
     cfg.gls.diss_min = cfg.gls_diss_min

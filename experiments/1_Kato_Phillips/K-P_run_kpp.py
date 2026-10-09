@@ -11,7 +11,7 @@ for nz_val in [512, 256]:
     for dt_val in [36, 360, 3600]:
         cfg = Config()
 
-        cfg.ne   = 50
+        cfg.ne   = 500
         cfg.nz   = nz_val
         cfg.Hmin = 1.0
         cfg.Hmax = 50.0
@@ -23,9 +23,9 @@ for nz_val in [512, 256]:
         cfg.tend = 3600.0 * 30
 
         # --- Stochastic bool ---
-        cfg.temp_stochastic = True
-        cfg.salt_stochastic = True
-        cfg.vel_stochastic  = True
+        cfg.temp_stochastic = False
+        cfg.salt_stochastic = False
+        cfg.vel_stochastic  = False
 
         # --- EOS ---
         cfg.Tsurf  = 13
