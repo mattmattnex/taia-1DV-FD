@@ -85,25 +85,34 @@ class LotusTools:
     def plot_profiles(self, 
                       files_dict: dict, 
                       hmax: float = 50.0, 
-                      figsize: tuple = (10, 4)):
+                      figsize: tuple = (10, 4), 
+                      colors = None):
         
         fig, ax = plt.subplots(1, 2, figsize = figsize, sharey = True)
 
+        kplot = 0
         for label, file in files_dict.items():
             path = self.output_folder + file
             z, uem, uev = self.get_var(path, 'ue', kt = -1, cplx = True)
             
+            if colors is not None:
+                color = colors[kplot]
+            else:
+                color = f'C{kplot}'
+            
             # u-profile
-            ax[0].plot(uem.real, z, label = label)
+            ax[0].plot(uem.real, z, label = label, color = color)
             ax[0].fill_betweenx(z, uem.real - uev.real**0.5,
                                 uem.real + uev.real**0.5,
-                                alpha = 0.1)
+                                alpha = 0.1, color = color)
             
             # v-profile
-            ax[1].plot(uem.imag, z, label = label)
+            ax[1].plot(uem.imag, z, label = label, color = color)
             ax[1].fill_betweenx(z, uem.imag - uev.imag**0.5,
                                 uem.imag + uev.imag**0.5,
-                                alpha = 0.1)
+                                alpha = 0.1, color = color)
+            
+            kplot += 1
             
         # --- LOTUS obs errorbar ---
         ax[0].errorbar(self.uobs[0], self.zobs, xerr = self.DWC_std, color = 'k', ecolor = 'k', fmt = 'o', label = 'LOTUS', capsize=5)
@@ -129,14 +138,23 @@ class LotusTools:
                        files_dict: dict,
                        ne: int,
                        ylim: tuple = (-0.05, 0.3),
-                       figsize: tuple = (10, 3)):
+                       figsize: tuple = (10, 3),
+                       colors = None):
         
         fig, ax = plt.subplots(1, 1, figsize = figsize)
 
+        kplot = 0
         for label, file in files_dict.items():
+            
+            if colors is not None:
+                color = colors[kplot]
+            else:
+                color = f'C{kplot}'
+            
             path = self.output_folder + file
             t, eps = self.forecast_score(path, ne = ne)
-            ax.plot(t, eps, label = label)
+            ax.plot(t, eps, label = label, color = color)
+            kplot += 1
         
         ax.set_xlabel('Time (days)')
         ax.set_ylabel(r'$\epsilon / \epsilon_0$')
@@ -151,24 +169,32 @@ class LotusTools:
     def plot_mixing(self, 
                       files_dict: dict, 
                       hmax: float = 50.0, 
-                      figsize: tuple = (4, 5)):
+                      figsize: tuple = (4, 5),
+                      colors = None):
         
         fig, ax = plt.subplots(1, 1, figsize = figsize, sharey = True)
 
+        kplot = 0
         for label, file in files_dict.items():
             path = self.output_folder + file
             z, azm_m, azm_v = self.get_var(path, 'az_m', kt = -1, cplx = False)
             
+            if colors is not None:
+                color = colors[kplot]
+            else:
+                color = f'C{kplot}'
+            
             # u-profile
-            ax.plot(azm_m, z, label = label)
+            ax.plot(azm_m, z, label = label, color = color)
             ax.fill_betweenx(z, azm_m - azm_v**0.5,
                                 azm_m + azm_v**0.5,
-                                alpha = 0.1)
-        # --- LOTUS obs errorbar ---
+                                alpha = 0.1, color = color)
+            
+            kplot += 1
+            
         ax.set_title(r'$a_{zz}^m(z)$')
         ax.set_xlabel(r'$[m^2.s^{-1}]$')
         ax.set_ylabel('z (m)')
-        # ax.set_xlim(-0.02, 0.04)
         ax.set_ylim(-hmax, 1)
         ax.grid()
 

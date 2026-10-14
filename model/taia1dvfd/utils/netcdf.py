@@ -150,11 +150,11 @@ class SaveNetCDF:
             mean = t.mean(dim=0)
             return torch.stack([mean.real,
                                 mean.imag,
-                                t.real.var(dim=0),
-                                t.imag.var(dim=0)])
+                                t.real.var(dim=0, correction=1 if t.shape[0] > 1 else 0),
+                                t.imag.var(dim=0, correction=1 if t.shape[0] > 1 else 0)])
         else:
             return torch.stack([t.mean(dim=0),
-                                t.var(dim=0)])
+                                t.var(dim=0, correction=1 if t.shape[0] > 1 else 0)])
 
     def flush(self):
         """Copy the buffered records to the CPU and write them in one block."""

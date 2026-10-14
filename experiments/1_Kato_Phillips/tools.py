@@ -17,8 +17,8 @@ class KatoPhillipsAnalyser:
     def plot_MLD(self,
         closures = ('k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke'),
         nens = 500,
-        dts = (36, 360, 1200, 3600),
-        nzs = (500, 50, 25, 10),
+        dts = (36, 360, 3600),
+        nzs = (512, 128, 32),
         title = None):
         
         # Accept scalars as well as sequences
@@ -79,8 +79,8 @@ class KatoPhillipsAnalyser:
     def plot_forecast(self,
         closures = ('k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke'),
         nens = 500,
-        dts = (36, 360, 1200, 3600),
-        nzs = (500, 50, 25, 10),
+        dts = (36, 360, 3600),
+        nzs = (512, 128, 32),
         title = r'Forecast score $\varepsilon$'):
 
         return self._plot_grid(
@@ -91,8 +91,8 @@ class KatoPhillipsAnalyser:
     def plot_spread(self,
         closures = ('k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke'),
         nens = 500,
-        dts = (36, 360, 1200, 3600),
-        nzs = (500, 50, 25, 10),
+        dts = (36, 360, 3600),
+        nzs = (512, 128, 32),
         title = r'Ensemble spread $\sigma$'):
 
         return self._plot_grid(
