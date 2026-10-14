@@ -91,6 +91,8 @@ for closure in CLOSURES:
             savefile.save(model.state)
 
             # ================== Main Loop ==================
+            # Order : Wind -> Mixing + Ops -> Noise -> T/S -> Momentum -> EOS -> MLD
+            # ===============================================
             for kt in range(cfg.nt):
                 prof.start()
                 
@@ -103,11 +105,9 @@ for closure in CLOSURES:
                     mix.gls_step(u_star, model)
                 elif closure == 'tke':
                     mix.tke_step(u_star, model)
-                prof.mark("Mix")
-                
-                # --- Update mixing operators ---
                 operators.update_momentum_diffusion(state.az_m)
                 operators.update_tracers_diffusion(state.az_t)
+                prof.mark("Mix")
                 
                 # --- Noise ---
                 phy.noise_LU_step(model)
@@ -118,7 +118,7 @@ for closure in CLOSURES:
                 eos.salinity_equation_step(model)
                 prof.mark("T-S")
                 
-                # --- Physics and stochastic
+                # --- Momentum --- 
                 phy.momentum_equation_step(model)
                 prof.mark("Phy")
 

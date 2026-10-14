@@ -72,7 +72,7 @@ class Config:
     gls_vonKar:   float = 0.4
     gls_galp:     float = 0.53
     gls_chk:      float = 1400 / 9.81
-    gls_zos_min:  float = 1e-2
+    gls_zos_min:  float = 2e-2
     gls_zob_min:  float = 1e-2
     gls_lsc0:     float = 0.05
     gls_cmu_min:      float = 1e-10
@@ -83,17 +83,17 @@ class Config:
     gls_psi_min:  float = 1e-12
     gls_azm_min:  float = 1.2e-4
     gls_azt_min:  float = 1.2e-5
-    gls_tke_min:  float = 1e-6
+    gls_tke_min:  float = 1e-7
     gls_diss_min: float = 1e-12
     gls_wave_mix: bool  = True
     _eps_sf: float = 1e-20
     _lim_sf: float = 1e10
     
     gls_model_params: dict = {
-    'k-kl':      {'rp':  0.0, 'rm': 1.0, 'rn':  1.0,     'beta1': 0.9,   'beta2': 0.5,   'beta3p': 1.0, 'beta3m': {'KC':  2.53, 'CA':  2.62}, 'sig_tke': 1.96, 'sig_psi': 1.96},
-    'k-epsilon': {'rp':  3.0, 'rm': 1.5, 'rn': -1.0,     'beta1': 1.44,  'beta2': 1.92,  'beta3p': 1.0, 'beta3m': {'KC': -0.52, 'CA': -0.63}, 'sig_tke': 1.0,  'sig_psi': 1.3},
-    'k-omega':   {'rp': -1.0, 'rm': 0.5, 'rn': -1.0,     'beta1': 0.555, 'beta2': 0.833, 'beta3p': 1.0, 'beta3m': {'KC': -0.58, 'CA': -0.64}, 'sig_tke': 2.0,  'sig_psi': 2.0},
-    'gen':       {'rp':  2.0, 'rm': 1.0, 'rn': -2.0/3.0, 'beta1': 1.0,   'beta2': 1.22,  'beta3p': 1.0, 'beta3m': {'KC':  0.1,  'CA':  0.05}, 'sig_tke': 0.8,  'sig_psi': 1.07}
+    'k-kl':      {'rp':  0.0, 'rm': 1.0, 'rn':  1.0,  'beta1': 0.9,   'beta2': 0.5,   'beta3p': 1.0, 'beta3m': {'KC':  2.53, 'CA':  2.62}, 'sig_tke': 1.96, 'sig_psi': 1.96},
+    'k-epsilon': {'rp':  3.0, 'rm': 1.5, 'rn': -1.0,  'beta1': 1.44,  'beta2': 1.92,  'beta3p': 1.0, 'beta3m': {'KC': -0.52, 'CA': -0.63}, 'sig_tke': 1.0,  'sig_psi': 1.3},
+    'k-omega':   {'rp': -1.0, 'rm': 0.5, 'rn': -1.0,  'beta1': 0.555, 'beta2': 0.833, 'beta3p': 1.0, 'beta3m': {'KC': -0.58, 'CA': -0.64}, 'sig_tke': 2.0,  'sig_psi': 2.0},
+    'gen':       {'rp':  2.0, 'rm': 1.0, 'rn': -0.67, 'beta1': 1.0,   'beta2': 1.22,  'beta3p': 1.0, 'beta3m': {'KC':  0.1,  'CA':  0.05}, 'sig_tke': 0.8,  'sig_psi': 1.07}
     }
     
     gls_stabf_params: dict = {

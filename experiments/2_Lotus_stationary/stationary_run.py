@@ -53,26 +53,16 @@ for prefix, mix_model in CLOSURES:
     # -------------------------
     # Params for KPP
     cfg.kpp_regularization = False
-    cfg.kpp_azm_min = 1e-4
-    cfg.kpp_azt_min = 1e-4
     
     # Params for tke closure
     cfg.tke_wave_mix = True
-    cfg.tke_pdl = True        
-    cfg.tke_ebb = 67.83
-    cfg.tke_azm_min = 1e-4
-    cfg.tke_azt_min = 1e-4
     
     # Params for GLS
     cfg.gls_stabf = 'CA'
     cfg.gls_model = mix_model
-    cfg.gls_azm_min  = 1e-4
-    cfg.gls_azt_min  = 1e-4
-    cfg.gls_tke_min  = 1e-8
-    cfg.gls_diss_min = 1e-12
     
     # --- Finalization ---
-    cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/LOTUS/output/"
+    cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/2_Lotus_stationary/output/"
     cfg.file_name =  f'lotus_closure_{mix_model}_ne{cfg.ne}.nc'
     cfg.var_to_save = ['ue', 'az_m', 'az_t', 'temp']
     cfg.finalize()
@@ -108,6 +98,8 @@ for prefix, mix_model in CLOSURES:
     savefile.save(model.state)
             
     # ================== Main Loop ==================
+    # Order : Wind -> Mixing + Ops -> Noise -> T/S -> Momentum -> EOS -> MLD
+    # ===============================================
     for kt in range(cfg.nt):
         prof.start()
         
@@ -123,27 +115,29 @@ for prefix, mix_model in CLOSURES:
             mix.tke_step(u_star, model)
         else:
             mix.gls_step(u_star, model)
-        prof.mark("Mix")
-        
-        # --- Update mixing operators ---
         operators.update_momentum_diffusion(state.az_m)
         operators.update_tracers_diffusion(state.az_t)
-        prof.mark("Ops")
+        prof.mark("Mix")
         
-        # --- EOS ---
+        # --- Noise ---
+        phy.noise_LU_step(model)
+        prof.mark("Sig")
+
+        # --- Temp Sal ---
         eos.temperature_equation_step(model)
         eos.salinity_equation_step(model)
+        prof.mark("T-S")
+        
+        # --- Momentum --- 
+        phy.momentum_equation_step(model)
+        prof.mark("Phy")
+
+        # --- EOS ---
         eos.eos_step(model)
-        prof.mark("eos")
 
         # --- MLD ---
         mix.mld_step(model)
         prof.mark("mld")
-
-        # --- Physics and stochastic
-        phy.noise_LU_step(model)        
-        phy.momentum_equation_step(model)
-        prof.mark("Phy")
         
         # --- Update time ---
         model.state.time += model.config.dt

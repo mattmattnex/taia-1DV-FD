@@ -63,34 +63,35 @@ for model_conf in ['PDE', 'SPDE-noWM', 'SPDE']:
     # --- Initializations ---
     phy.noise_LU_init(model)
     phy.wind_ornstein_init(model)
-    mix.kpp_init(model)    
+    mix.kpp_init(model)
 
     savefile.init_file(model.state)
     savefile.save(model.state)
             
     # ================== Main Loop ==================
+    # Order : Wind -> Mixing + Ops -> Noise -> Momentum
+    # ===============================================
     for kt in range(cfg.nt):
         prof.start()
         
         # --- Wind forcing ---
         phy.wind_ornstein_step(model)
         u_star = phy.compute_ustar(model).squeeze(-1)
-        prof.mark("Wind")
         
         # --- Vertical Mixing ---
         mix.kpp_step(u_star, model)
-        prof.mark("Mix")
-        
-        # --- Update mixing operators ---
         operators.update_momentum_diffusion(state.az_m)
         operators.update_tracers_diffusion(state.az_t)
-        prof.mark("Ops")
+        prof.mark("Mix")
 
-        # --- Physics and stochastic
-        phy.noise_LU_step(model)        
+        # --- Noise ---
+        phy.noise_LU_step(model)
+        prof.mark("Sig")
+        
+        # --- Momentum --- 
         phy.momentum_equation_step(model)
         prof.mark("Phy")
-        
+
         # --- Update time ---
         model.state.time += model.config.dt
         
