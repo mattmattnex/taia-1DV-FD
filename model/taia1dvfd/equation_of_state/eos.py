@@ -21,14 +21,15 @@ def _density(model: Model):
 def _brunt_vaisala(model: Model):
     cfg   = model.config
     state = model.state
-    Dcw   = model.operators.d_dz_c2w
+    grd   = model.grid
 
     # Buoyancy anomaly b = -g (rho - rho_o) / rho_o  (no float32 cancellation around 1000)
     buoy = cfg.g * (cfg.beta_T * (state.temp - cfg.eos_T0)
                   - cfg.beta_S * (state.salt - cfg.eos_S0))
 
-    N2 = Dcw @ buoy                    # N2 = db/dz with the true d/dz operator
-    N2[:, 0,  :] = N2[:,  1, :]
-    N2[:, -1, :] = N2[:, -2, :]
+    N2 = torch.zeros_like(state.N2)
+    N2[:, 1:-1] = (buoy[:, :-1] - buoy[:, 1:]) / grd.dz
+    N2[:, 0]    = N2[:, 1]
+    N2[:, -1]   = N2[:, -2]
 
     state.N2[:] = N2

@@ -116,8 +116,6 @@ for prefix, mix_model in CLOSURES:
             mix.tke_step(u_star, model)
         else:
             mix.gls_step(u_star, model)
-        # operators.update_momentum_diffusion(state.az_m)
-        operators.update_tracers_diffusion(state.az_t)
         prof.mark("Mix")
         
         # --- Noise ---
