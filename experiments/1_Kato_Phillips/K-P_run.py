@@ -11,16 +11,15 @@ import taia1dvfd.equation_of_state as eos
 CLOSURES = ['k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke']
 NZ_VALUES = [500, 50, 25, 10]
 DT_VALUES = [36, 360, 1200, 3600]
-NENS = 500
-# OUTPUT_FOLDER = 'deterministic'
-OUTPUT_FOLDER = 'stochastic'
+OUTPUT_FOLDER = 'deterministic'
+# OUTPUT_FOLDER = 'stochastic'
 
 for closure in CLOSURES:
     for nz in NZ_VALUES:
         for dt in DT_VALUES:
+            print(f'Runnig : {closure} with nz={nz}, dt={dt} in mode {OUTPUT_FOLDER}')
             cfg = Config()
 
-            cfg.ne   = NENS
             cfg.nz   = nz
             cfg.Hmin = 0.0
             cfg.Hmax = 50.0
@@ -32,9 +31,16 @@ for closure in CLOSURES:
             cfg.tend = 3600.0 * 30
 
             # --- Stochastic bool ---
-            cfg.temp_stochastic = False
-            cfg.salt_stochastic = False
-            cfg.vel_stochastic  = True
+            if OUTPUT_FOLDER == 'deterministic':
+                cfg.ne = 1
+                cfg.temp_stochastic = False
+                cfg.salt_stochastic = False
+                cfg.vel_stochastic  = False
+            elif OUTPUT_FOLDER == "stochastic":
+                cfg.ne = 500
+                cfg.temp_stochastic = True
+                cfg.salt_stochastic = True
+                cfg.vel_stochastic  = True
             
             # --- No waves ---
             cfg.us0 = 0.0

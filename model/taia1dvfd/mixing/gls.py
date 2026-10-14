@@ -1,6 +1,6 @@
 import math
 import torch
-from taia1dvfd.core import Model, pcr_solve
+from taia1dvfd.core import Model, pcr
 
 def gls_init(model: Model):
     cfg   = model.config
@@ -80,40 +80,61 @@ def _compute_length_scale(tke, diss, model: Model):
     return torch.clamp(lsc, min=cfg.gls_lsc_min)
 
 def _build_operator(sink, sigma, model: Model):
-    """I + dt*diag(sink) - (dt/sigma) * d/dz( avm d/dz ), with the face
-    diffusivity 0.5*(avm[j]+avm[j+1]) built here (NOT ops.d_azmdz, whose
-    boundary rows are overwritten in place by the momentum step and whose
-    coefficients lag one time step)."""
+    """
+    Banded form of  I + dt*diag(sink) - (dt/sigma) * d/dz( avm d/dz ),
+    with the face diffusivity 0.5*(avm[j]+avm[j+1]).
+
+    Returns the three diagonals (same convention as pcr):
+      lo : (ne, nz)    lo[i] = L[i+1, i]
+      dg : (ne, nz+1)  dg[i] = L[i, i]
+      up : (ne, nz)    up[i] = L[i, i+1]
+    Diffusion acts on the interior rows 1..nz-1 only; the boundary rows are
+    always overwritten by the boundary conditions.
+    """
     cfg = model.config
     grd = model.grid
-    azm = model.state.az_m
+    azm = model.state.az_m[..., 0]
 
-    dt, nz  = cfg.dt, cfg.nz
+    dt      = cfg.dt
     inv_dz2 = grd.inv_dz2
 
-    I = torch.eye(nz + 1, **cfg.farr_kwargs)
-    L = I + torch.diag_embed((dt * sink).squeeze(-1))
+    a_face = 0.5 * (azm[:, :-1] + azm[:, 1:]) * inv_dz2 / sigma   # (ne, nz): between nodes i and i+1
 
-    azm_v = azm[:, :, 0]
-    jk = torch.arange(1, nz, device=azm.device)
+    up = -dt * a_face
+    lo = -dt * a_face
+    up[:, 0]  = 0.0                     # no diffusion in the surface row
+    lo[:, -1] = 0.0                     # no diffusion in the bottom row
 
-    a_up = 0.5 * (azm_v[:, jk + 1] + azm_v[:, jk    ]) * inv_dz2 / sigma
-    a_lw = 0.5 * (azm_v[:, jk    ] + azm_v[:, jk - 1]) * inv_dz2 / sigma
-
-    L[:, jk, jk + 1] += -dt * a_up
-    L[:, jk, jk - 1] += -dt * a_lw
-    L[:, jk, jk    ] +=  dt * (a_up + a_lw)
-    return L
+    dg = 1.0 + dt * sink[..., 0]
+    dg[:, 1:-1] += dt * (a_face[:, :-1] + a_face[:, 1:])
+    return lo, dg, up
 
 def _set_dirichlet(L, RHS, row, value):
-    L[:, row, :]   = 0.0
-    L[:, row, row] = 1.0
+    """Row `row` becomes  x[row] = value."""
+    lo, dg, up = L
+    n   = dg.shape[1]
+    row = row % n
+
+    dg[:, row] = 1.0
+    if row < n - 1:
+        up[:, row] = 0.0
+    if row > 0:
+        lo[:, row - 1] = 0.0
     RHS[:, row, :] = value
 
 def _set_neumann(L, RHS, row, nbr, flux, dt, dz):
     """Decouple `row` from its boundary neighbour `nbr` and inject `flux`."""
-    L[:, row, row] += L[:, row, nbr]
-    L[:, row, nbr]  = 0.0
+    lo, dg, up = L
+    n   = dg.shape[1]
+    row = row % n
+    nbr = nbr % n
+
+    if nbr == row - 1:                  # neighbour above: coefficient stored in lo[row-1]
+        dg[:, row]    += lo[:, row - 1]
+        lo[:, row - 1] = 0.0
+    else:                               # neighbour below: coefficient stored in up[row]
+        dg[:, row]    += up[:, row]
+        up[:, row]     = 0.0
     RHS[:, row, :] += dt * flux / dz
 
 def _tke_equation(u_star, tke_b, diss_b, prod, model: Model):
@@ -153,8 +174,8 @@ def _tke_equation(u_star, tke_b, diss_b, prod, model: Model):
         _set_neumann(L, RHS,  1,  0, 0.0, dt, dz)
         _set_neumann(L, RHS, -2, -1, 0.0, dt, dz)
 
-    # tke_new = torch.linalg.solve(L, RHS)
-    tke_new = pcr_solve(L, RHS)
+    lo, dg, up = L
+    tke_new = pcr(lo, dg, up, RHS)
     return torch.clamp(tke_new, min=p.tke_min)
 
 def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
@@ -206,8 +227,8 @@ def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
         _set_neumann(L, RHS,  1,  0, flx_s, dt, dz)
         _set_neumann(L, RHS, -2, -1, flx_b, dt, dz)
 
-    # psi_new = torch.linalg.solve(L, RHS)
-    psi_new = pcr_solve(L, RHS)
+    lo, dg, up = L
+    psi_new = pcr(lo, dg, up, RHS)
     psi_new = torch.clamp(psi_new, min=cfg.gls_psi_min)
 
     # --- Length-scale limitation ---
@@ -266,7 +287,7 @@ def _get_psi_bc(u_star, tke, model: Model):
     rp, rm, rn = p.rp, p.rm, p.rn
     cff_flx = -rn * cm0 ** (rp + 1.0) * vonKar / p.sig_psi
 
-    # --- Surface (Charnock roughness) ---
+    # --- Surface (fixed roughness z0_surf) ---
     z0_s = torch.full_like(u_star, cfg.z0_surf)
     k_s0, k_s1 = tke[:, 0, :], tke[:, 1, :]
 

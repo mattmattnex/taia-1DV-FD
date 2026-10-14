@@ -1,5 +1,5 @@
 import torch
-from taia1dvfd.core import Model, Grid, Config, pcr_solve
+from taia1dvfd.core import Model, Grid, Config, pcr
 
 def tke_init(model: Model) -> None:
     state = model.state
@@ -21,10 +21,7 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     N2    = state.N2
     dissl = state.dissl
 
-    fkw     = cfg.farr_kwargs
     dt      = cfg.dt
-    nz      = cfg.nz
-    ne      = cfg.ne
     inv_dz2 = grd.inv_dz2
 
     Ck    = cfg.tke_ediff
@@ -37,49 +34,43 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     du     = state.ue[:, :-1] - state.ue[:, 1:]               # (ne, nz) differences between face nodes
     dut    = u_tot[:, :-1]    - u_tot[:, 1:]
     a_half = 0.5 * (azm[:, :-1] + azm[:, 1:])                 # same a_{i+1/2} as the momentum operator
-    P_c    = a_half * (du * dut.conj()).real / grd.dz**2      # exactly what d_azmdz removes from u
-    sh2    = grd.to_w(P_c).clamp(min = 0.0)                     # production at faces
-    
+    P_c    = a_half * (du * dut.conj()).real / grd.dz**2      # exactly what the momentum diffusion removes from u
+    sh2    = grd.to_w(P_c).clamp(min=0.0)                     # production at faces
+
     P_c_E = a_half * (du * du.conj()).real / grd.dz**2
-    sh2_E = grd.to_w(P_c_E) # for Richardson number
+    sh2_E = grd.to_w(P_c_E)                                   # for Richardson number
 
-    # ====================
-    # --- TKE equation ---
-    # ====================
-    Idc = torch.eye(nz + 1, **fkw)
-    L   = Idc.unsqueeze(0).repeat(ne, 1, 1)
+    # ===========================================
+    # --- TKE equation (banded: 3 diagonals) ---
+    # ===========================================
+    # Diffusivity between nodes i and i+1. NEMO clamps the SUM of adjacent avm
+    # at 2e-5 (effective floor 1e-5 on the mean).
+    azm_v  = azm[..., 0]
+    a_face = 0.5 * torch.clamp(azm_v[:, :-1] + azm_v[:, 1:], min=cfg.tke_azm_floor) * inv_dz2   # (ne, nz)
 
-    azm_v = azm[:, :, 0]
-    jk = torch.arange(1, nz, device=azm.device)
+    L_up = -dt * a_face                                       # L[i, i+1]
+    L_lo = -dt * a_face                                       # L[i+1, i]
 
-    # NEMO clamps the SUM of adjacent avm at 2e-5 (effective floor 1e-5 on the mean)
-    a_up = 0.5 * torch.clamp(azm_v[:, jk + 1] + azm_v[:, jk],     min=cfg.tke_azm_floor) * inv_dz2
-    a_lw = 0.5 * torch.clamp(azm_v[:, jk]     + azm_v[:, jk - 1], min=cfg.tke_azm_floor) * inv_dz2
-
-    L[:, jk, jk + 1] += -dt * a_up
-    L[:, jk, jk - 1] += -dt * a_lw
-    
-    # Linearization of Ceps e^{3/2}/l :
-    L[:, jk, jk]     +=  dt * (a_up + a_lw) + 1.5 * dt * Ceps * dissl[:, jk, 0]
+    # Diagonal: diffusion + linearization of Ceps e^{3/2}/l (interior rows)
+    L_dg = torch.ones_like(azm_v)
+    L_dg[:, 1:-1] = (1.0 + dt * (a_face[:, :-1] + a_face[:, 1:])
+                     + 1.5 * dt * Ceps * dissl[:, 1:-1, 0])
 
     rhs = en.clone()
-    rhs[:, 1:nz, 0] += dt * (sh2[:, 1:nz, 0]
-                             - azt[:, 1:nz, 0] * N2[:, 1:nz, 0]
-                             + 0.5 * Ceps * dissl[:, 1:nz, 0] * en[:, 1:nz, 0])
+    rhs[:, 1:-1, 0] += dt * (sh2[:, 1:-1, 0]
+                             - azt[:, 1:-1, 0] * N2[:, 1:-1, 0]
+                             + 0.5 * Ceps * dissl[:, 1:-1, 0] * en[:, 1:-1, 0])
 
-    # --- BCs (Dirichlet) ---
+    # --- BCs (Dirichlet): row 0 = surface, row nz = bottom ---
     en_surf = torch.clamp(cfg.tke_ebb * u_star ** 2, min=emin0)
 
-    L[:, 0, :]   = 0.0
-    L[:, 0, 0]   = 1.0
+    L_up[:, 0]   = 0.0          # surface row decoupled from row 1
     rhs[:, 0, :] = en_surf
 
-    L[:, -1, :]   = 0.0
-    L[:, -1, -1]  = 1.0
+    L_lo[:, -1]   = 0.0         # bottom row decoupled from row nz-1
     rhs[:, -1, :] = emin
 
-    # en_new = torch.linalg.solve(L, rhs)
-    en_new = pcr_solve(L, rhs)
+    en_new = pcr(L_lo, L_dg, L_up, rhs)
     en_new = torch.clamp(en_new, min=emin)
     state.tke[:] = en_new
 
@@ -89,17 +80,17 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     lk, le = _mixing_lengths(en_new, N2, cfg, grd)
     sq_en   = torch.sqrt(en_new)
     state.dissl[:] = sq_en / le
-    
+
     azm_raw = Ck * lk * sq_en
     azm_new = torch.clamp(azm_raw, min=cfg.tke_azm_min, max=cfg.az_max)
-    
+
     # --- Prandtl number ---
     Ri   = N2 * azm_new / (sh2_E + cfg.tke_bshear)
     Ri   = torch.where(N2 <= 0.0, torch.zeros_like(Ri), Ri)
-    pdlr = (cfg.tke_ri_cri / Ri.clamp(min=cfg.tke_ri_cri)).clamp(min=0.1)        
+    pdlr = (cfg.tke_ri_cri / Ri.clamp(min=cfg.tke_ri_cri)).clamp(min=0.1)
 
-    azt_new = (azm_raw * pdlr).clamp(min=cfg.tke_azt_min)
-    
+    azt_new = (azm_raw * pdlr).clamp(min=cfg.tke_azt_min, max=cfg.az_max)
+
     state.az_m[:] = azm_new
     state.az_t[:] = azt_new
 

@@ -1,6 +1,6 @@
 import torch
 
-from taia1dvfd.core  import Config, Grid, State, Model, Operators
+from taia1dvfd.core  import Config, Grid, State, Model
 from taia1dvfd.utils import SaveNetCDF, StepProfiler
 
 import taia1dvfd.physics as phy
@@ -71,8 +71,8 @@ for prefix, mix_model in CLOSURES:
     # --- Model objects ---
     grid   = Grid(cfg)
     state  = State(cfg)
-    operators = Operators(cfg, grid)
-    model    = Model(cfg, grid, state, operators)
+    # operators = Operators(cfg, grid)
+    model    = Model(cfg, grid, state)
     savefile = SaveNetCDF(model)
     prof    = StepProfiler(sync = True)
 
