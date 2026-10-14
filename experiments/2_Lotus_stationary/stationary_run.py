@@ -8,12 +8,12 @@ import taia1dvfd.mixing  as mix
 import taia1dvfd.equation_of_state as eos
 
 CLOSURES = [
-    ('kpp', 'kpp'),
+    # ('kpp', 'kpp'),
     ('gls', 'k-kl'),
-    ('gls', 'k-epsilon'),
-    ('gls', 'k-omega'),
-    ('gls', 'gen'),
-    ('tke', 'tke')
+    # ('gls', 'k-epsilon'),
+    # ('gls', 'k-omega'),
+    # ('gls', 'gen'),
+    # ('tke', 'tke')
 ]
 
 for prefix, mix_model in CLOSURES:
@@ -38,8 +38,8 @@ for prefix, mix_model in CLOSURES:
     cfg.wave_mixing = True
     
     # --- Stochastic bool ---
-    cfg.temp_stochastic = False
-    cfg.salt_stochastic = False
+    cfg.temp_stochastic = True
+    cfg.salt_stochastic = True
     cfg.vel_stochastic  = True
 
     # --- EOS ---
@@ -144,6 +144,9 @@ for prefix, mix_model in CLOSURES:
         
         # --- Save file ---
         savefile.save(model.state)
+        
+        print(kt, state.N2.min().item(), state.N2.max().item(),
+      state.az_m.max().item(), state.lsc.max().item(), state.tke.max().item())
 
         if kt%5 == 0:
             print(prof.format_step(kt, cfg.nt))

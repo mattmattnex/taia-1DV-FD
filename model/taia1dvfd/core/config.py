@@ -83,7 +83,7 @@ class Config:
     gls_psi_min:  float = 1e-12
     gls_azm_min:  float = 1.2e-4
     gls_azt_min:  float = 1.2e-5
-    gls_tke_min:  float = 1e-7
+    gls_tke_min:  float = 1e-8
     gls_diss_min: float = 1e-12
     gls_wave_mix: bool  = True
     _eps_sf: float = 1e-20

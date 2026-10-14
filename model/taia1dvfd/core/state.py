@@ -60,7 +60,7 @@ class State:
         # Sigmas
         self.sig_h   = torch.zeros(ne, nz+1, 1, **ckw)
         self.sig_z_m = torch.zeros(ne, nz+1, 1, **fkw)
-        self.sig_z_t = torch.zeros(ne,   nz, 1, **fkw)
+        self.sig_z_t = torch.zeros(ne, nz+1, 1, **fkw)
         
         # Noise
         self.dB_w  = torch.zeros(ne, nz+1, 1, **fkw)
