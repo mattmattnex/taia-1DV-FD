@@ -74,7 +74,7 @@ for prefix, mix_model in CLOSURES:
     operators = Operators(cfg, grid)
     model    = Model(cfg, grid, state, operators)
     savefile = SaveNetCDF(model)
-    prof    = StepProfiler()
+    prof    = StepProfiler(sync = True)
 
     # --- Initializations ---
     phy.noise_LU_init(model)
@@ -116,7 +116,7 @@ for prefix, mix_model in CLOSURES:
             mix.tke_step(u_star, model)
         else:
             mix.gls_step(u_star, model)
-        operators.update_momentum_diffusion(state.az_m)
+        # operators.update_momentum_diffusion(state.az_m)
         operators.update_tracers_diffusion(state.az_t)
         prof.mark("Mix")
         

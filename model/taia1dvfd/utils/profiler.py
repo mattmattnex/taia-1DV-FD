@@ -2,11 +2,12 @@ import time
 import torch
 from collections import defaultdict
 
-
 class StepProfiler:
     """Lightweight per-section timer with running statistics."""
 
-    def __init__(self):
+    def __init__(self, sync: bool = False):
+        self.sync = sync and torch.cuda.is_available()
+
         self._t0 = None
         self._last = None
         self.times = defaultdict(float)        # this step's section times (ms)
@@ -15,13 +16,18 @@ class StepProfiler:
         self.peaks = defaultdict(float)        # slowest occurrence per section
 
     def start(self):
+        if self.sync:
+            torch.cuda.synchronize()
         self._t0 = time.perf_counter()
         self._last = self._t0
         self.times.clear()
 
     def mark(self, name):
         """Record elapsed time since the previous mark under `name`."""
+        if self.sync:
+            torch.cuda.synchronize()
         now = time.perf_counter()
+
         dt_ms = (now - self._last) * 1000.0
         self._last = now
         self.times[name] = dt_ms

@@ -10,7 +10,11 @@ def _shift(P: torch.Tensor, s: int, pad: torch.Tensor, up: bool) -> torch.Tensor
 def pcr(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor, d: torch.Tensor) -> torch.Tensor:
     """
     Batched parallel cyclic reduction for tridiagonal systems  L x = d.
-    Same arguments and result as `thomas`.
+
+      a : (*batch, n-1)  sub-diagonal    a[i] = L[i+1, i]
+      b : (*batch, n)    diagonal        b[i] = L[i, i]
+      c : (*batch, n-1)  super-diagonal  c[i] = L[i, i+1]
+      d : (*batch, n, k) right-hand side
 
     ceil(log2 n) fully vectorized steps instead of a loop over n: far fewer
     (larger) torch ops, so much less kernel-launch / dispatch overhead.
@@ -54,8 +58,40 @@ def pcr(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor, d: torch.Tensor) -> t
 
 
 def pcr_solve(Lop: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
-    """Drop-in replacement for torch.linalg.solve(Lop, rhs) when Lop is tridiagonal (PCR)."""
+    """Drop-in replacement for torch.linalg.solve(Lop, rhs) when Lop is tridiagonal (PCR).
+    Kept for the equations not yet converted to banded form."""
     a = torch.diagonal(Lop, offset=-1, dim1=-2, dim2=-1)
     b = torch.diagonal(Lop, offset=0,  dim1=-2, dim2=-1)
     c = torch.diagonal(Lop, offset=1,  dim1=-2, dim2=-1)
     return pcr(a, b, c, rhs)
+
+
+# =====================================================================
+#  Banded helpers (no dense (ne, n, n) matrices)
+# =====================================================================
+def tridiag_apply(lo: torch.Tensor, dg: torch.Tensor, up: torch.Tensor,
+                  x: torch.Tensor) -> torch.Tensor:
+    """
+    y = T x for a tridiagonal T given by its diagonals (same convention as pcr):
+      lo : (ne, n-1)  lo[i] = T[i+1, i]
+      dg : (ne, n)    dg[i] = T[i, i]
+      up : (ne, n-1)  up[i] = T[i, i+1]
+      x  : (ne, n)
+    """
+    y = dg * x
+    y[:, :-1] = y[:, :-1] + up * x[:, 1:]
+    y[:, 1:]  = y[:, 1:]  + lo * x[:, :-1]
+    return y
+
+
+def ddz(x: torch.Tensor, dz) -> torch.Tensor:
+    """
+    True d/dz of x (ne, n) on a grid whose index increases downward (z[i+1] = z[i] - dz).
+    Centred in the interior, second-order one-sided at both ends.
+    Same result as the old dense operators d_dz_c / d_dz_w.
+    """
+    d = torch.empty_like(x)
+    d[:, 1:-1] = (x[:, :-2] - x[:, 2:]) / (2 * dz)
+    d[:, 0]    = ( 1.5 * x[:, 0]  - 2 * x[:, 1]  + 0.5 * x[:, 2])  / dz
+    d[:, -1]   = (-1.5 * x[:, -1] + 2 * x[:, -2] - 0.5 * x[:, -3]) / dz
+    return d
