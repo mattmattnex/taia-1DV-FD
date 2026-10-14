@@ -19,6 +19,8 @@ class Config:
     save_folder = "/home/mnex/Desktop/1DV_FD/experiments/"
     file_name = f"output.nc"
     var_to_save = ['temp', 'mld', 'N2']
+    save_every:  int = 1
+    flush_every: int = 100
 
     # --- Physics ---
     vel_stochastic: bool = True
