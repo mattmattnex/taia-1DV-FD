@@ -26,9 +26,13 @@ def salinity_equation_step(model: Model,
     ops   = model.operators
     
     # --- Variables ---
-    salt_old = state.salt
-    azt      = state.az_t
-    sig_z    = state.sig_z_t
+    azt   = state.az_t
+    sig_z = state.sig_z_t
+    dB_w  = state.dB_w
+    
+    # --- Solving for salinity anomaly
+    salt_ref    = cfg.eos_S0
+    salt_old = state.temp - salt_ref
     
     # --- Parameters ---
     fkw = cfg.farr_kwargs
@@ -61,14 +65,10 @@ def salinity_equation_step(model: Model,
     Fk = 0
     rhs = salt_old + Fk*dt
     
-    # if cfg.salt_stochastic:
-    #     Gk = sig_z * (Dz @ salt_old)
-    #     rhs -= Gk * state.dB_c
-    
     # --- Stochastic transport (face-based, discrete fluctuation-dissipation balance) ---
     if cfg.salt_stochastic:
-        dTdz_w  = ops.d_dz_c2w @ salt_old                  # (ne, nz+1, 1) dT/dz at faces, 0 at boundary faces
-        noise_w = state.sig_z_t * dTdz_w * state.dB_w      # sigma_t and dB at faces
+        dSdz_w  = ops.d_dz_c2w @ salt_old  # (ne, nz+1, 1) dT/dz at faces, 0 at boundary faces
+        noise_w = sig_z * dSdz_w * dB_w    # sigma_t and dB at faces
         Gk      = (noise_w[:, :-1] + noise_w[:, 1:]) / 2**0.5
         rhs    -= Gk
     
@@ -87,6 +87,4 @@ def salinity_equation_step(model: Model,
         rhs[:, -1,  :] = salt_botm.unsqueeze(-1)
     
     # --- Solver ---
-    # state.salt[:] = torch.linalg.solve(Lop, rhs)
-    # state.salt[:] = thomas_solve(Lop, rhs)
-    state.salt[:] = pcr_solve(Lop, rhs)
+    state.salt[:] = pcr_solve(Lop, rhs) + salt_ref

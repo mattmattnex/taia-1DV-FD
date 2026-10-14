@@ -19,17 +19,16 @@ def _density(model: Model):
                                          + cfg.beta_S * (S - cfg.eos_S0))
     
 def _brunt_vaisala(model: Model):
-    cfg = model.config
-    ops = model.operators
+    cfg   = model.config
+    state = model.state
+    Dcw   = model.operators.d_dz_c2w
 
-    rho = model.state.rho
-    Dcw = ops.d_dz_c2w
+    # Buoyancy anomaly b = -g (rho - rho_o) / rho_o  (no float32 cancellation around 1000)
+    buoy = cfg.g * (cfg.beta_T * (state.temp - cfg.eos_T0)
+                  - cfg.beta_S * (state.salt - cfg.eos_S0))
 
-    # Derivative center to faces nz -> nz+1
-    N2 = -cfg.g / cfg.rho_o * (Dcw @ rho)
-    
-    # zero-gradient BC
+    N2 = Dcw @ buoy                    # N2 = db/dz with the true d/dz operator
     N2[:, 0,  :] = N2[:,  1, :]
     N2[:, -1, :] = N2[:, -2, :]
 
-    model.state.N2[:]  = N2
+    state.N2[:] = N2

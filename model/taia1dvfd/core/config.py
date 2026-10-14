@@ -1,5 +1,4 @@
 import math
-from dataclasses import dataclass, field
 from typing import Dict, Any, List
 import torch
 
@@ -43,23 +42,28 @@ class Config:
     theta_std:  float = math.radians(5.0)
     wave_mixing: bool = True
     
+    # --- Shared closure settings ---
+    vonKar:  float = 0.4
+    z0_surf: float = 2e-2      # surface roughness length, TKE and GLS [m]
+    az_max:  float = 1.0       # safety cap on a_m and a_t, all closures [m2/s]
+    
     # --- KPP ---
     kpp_c1:      float = 0.4
     kpp_c2:      float = 0.7
     kpp_zt_0:    float = 0.05
-    kpp_azm_min: float = 1e-4
-    kpp_azt_min: float = 1e-4
+    kpp_azm_min: float = 1.2e-4
+    kpp_azt_min: float = 1.2e-5
     kpp_regularization: bool = False
     
     # --- TKE closure ---
     tke_ediff:     float = 0.1        # rn_ediff : C_k, viscosity coef.  avm = Ck * l * sqrt(e)
     tke_ediss:     float = 0.7        # rn_ediss : C_eps, dissipation coef.
     tke_ebb:       float = 3.75       # rn_ebb   : surface TKE input coef.
-    tke_min:       float = 1.0e-6     # rn_emin  : minimum interior TKE   [m2/s2]
+    tke_tke_min:   float = 1.0e-8     # rn_emin  : minimum interior TKE   [m2/s2]
     tke_surf_min:  float = 1.0e-4     # rn_emin0 : minimum surface TKE    [m2/s2]
     tke_bshear:    float = 1.0e-20    # rn_bshear: background shear       [s-2]
     tke_azm_floor: float = 2.0e-5     # floor on avm in TKE diffusion solve
-    tke_rmxl0:     float = 0.04
+    tke_rmxl_min:  float = 0.01
     tke_N2_min:    float = 1e-14
     tke_azm_min:   float = 1.2e-4
     tke_azt_min:   float = 1.2e-5
@@ -69,10 +73,7 @@ class Config:
     gls_model: str = "k-kl"
     gls_stabf: str = "CA"
     gls_bc:    str = "dirichlet"
-    gls_vonKar:   float = 0.4
     gls_galp:     float = 0.53
-    gls_chk:      float = 1400 / 9.81
-    gls_zos_min:  float = 2e-2
     gls_zob_min:  float = 1e-2
     gls_lsc0:     float = 0.05
     gls_cmu_min:      float = 1e-10
@@ -128,16 +129,14 @@ class Config:
     R0:     float = 0
     abs_profile_type: str = 'I' # Jerlov absorption profile type (I, IA, IB, II)
 
-    # --- Derived quantities ---
-    f:          float = field(init=False)
-    nt:         int   = field(init=False)
-    cdrho:      float = field(init=False)
-    sqrt_cdrho: float = field(init=False)
-    sqrt_dt:    float = field(init=False)
-
-    # tensor kwargs
-    farr_kwargs: Dict[str, Any] = field(init=False, repr=False)
-    carr_kwargs: Dict[str, Any] = field(init=False, repr=False)
+    # --- Derived quantities (set in finalize) ---
+    f:          float = None
+    nt:         int   = None
+    cdrho:      float = None
+    sqrt_cdrho: float = None
+    sqrt_dt:    float = None
+    farr_kwargs: Dict[str, Any] = None
+    carr_kwargs: Dict[str, Any] = None
     
     def finalize(self) -> None:
         
@@ -154,5 +153,4 @@ class Config:
         self.nt = int(self.tend / self.dt)
         
         # --- TKE closure ---
-        self.tke_rmxl_min = 1.0e-6 / (self.tke_ediff * self.tke_min ** 0.5)
         self.tke_ri_cri = 2.0 / (2.0 + self.tke_ediss / self.tke_ediff)

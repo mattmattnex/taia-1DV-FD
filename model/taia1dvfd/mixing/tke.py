@@ -7,8 +7,8 @@ def tke_init(model: Model) -> None:
 
     state.az_m[:]  = cfg.tke_azm_min
     state.az_t[:]  = cfg.tke_azt_min
-    state.tke[:]   = cfg.tke_min
-    state.dissl[:] = cfg.tke_min ** 0.5 / cfg.tke_rmxl_min
+    state.tke[:]   = cfg.tke_tke_min
+    state.dissl[:] = cfg.tke_tke_min ** 0.5 / cfg.tke_rmxl_min
 
 def tke_step(u_star: torch.Tensor, model: Model) -> None:
     state = model.state
@@ -29,7 +29,7 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
 
     Ck    = cfg.tke_ediff
     Ceps  = cfg.tke_ediss
-    emin  = cfg.tke_min
+    emin  = cfg.tke_tke_min
     emin0 = cfg.tke_surf_min
 
     # --- Shear ---
@@ -38,7 +38,7 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     dut    = u_tot[:, :-1]    - u_tot[:, 1:]
     a_half = 0.5 * (azm[:, :-1] + azm[:, 1:])                 # same a_{i+1/2} as the momentum operator
     P_c    = a_half * (du * dut.conj()).real / grd.dz**2      # exactly what d_azmdz removes from u
-    sh2    = grd.to_w(P_c)                     # production at faces
+    sh2    = grd.to_w(P_c).clamp(min = 0.0)                     # production at faces
     
     P_c_E = a_half * (du * du.conj()).real / grd.dz**2
     sh2_E = grd.to_w(P_c_E) # for Richardson number
@@ -91,7 +91,7 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     state.dissl[:] = sq_en / le
     
     azm_raw = Ck * lk * sq_en
-    azm_new = torch.clamp(azm_raw, min=cfg.tke_azm_min)
+    azm_new = torch.clamp(azm_raw, min=cfg.tke_azm_min, max=cfg.az_max)
     
     # --- Prandtl number ---
     Ri   = N2 * azm_new / (sh2_E + cfg.tke_bshear)
@@ -109,7 +109,7 @@ def _mixing_lengths(en: torch.Tensor, N2: torch.Tensor, cfg: Config, grd: Grid):
     rmxl_min = cfg.tke_rmxl_min
 
     N2c = N2.clamp(min=cfg.tke_N2_min)
-    mxl = torch.sqrt(2.0 * en.clamp(min=cfg.tke_min) / N2c)
+    mxl = torch.sqrt(2.0 * en.clamp(min=cfg.tke_tke_min) / N2c)
     mxl = mxl.clamp(min=rmxl_min)
 
     z_idx = torch.arange(nz + 1, device=mxl.device, dtype=mxl.dtype) * dz
@@ -117,7 +117,7 @@ def _mixing_lengths(en: torch.Tensor, N2: torch.Tensor, cfg: Config, grd: Grid):
 
     # --- forward sweep (surface -> bottom) ---
     mxl_fwd = mxl.clone()
-    mxl_fwd[:, 0, :] = cfg.tke_rmxl0 + cfg.Hmin
+    mxl_fwd[:, 0, :] = cfg.vonKar * (cfg.z0_surf + cfg.Hmin)
     lup = torch.cummin(mxl_fwd - x, dim=1)[0] + x
 
     # --- backward sweep (bottom -> surface) ---

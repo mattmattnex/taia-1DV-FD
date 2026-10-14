@@ -210,18 +210,24 @@ def _psi_equation(u_star, tke_b, psi_b, diss_b, prod, tke_new, model: Model):
     psi_new = pcr_solve(L, RHS)
     psi_new = torch.clamp(psi_new, min=cfg.gls_psi_min)
 
-    # --- Galperin (1988) limiter, applied in psi space [Warner Eq. 56] ---
+    # --- Length-scale limitation ---
+    # Geometric bound (law of the wall, from the true surface) everywhere,
+    # Galperin (1988) bound under stable stratification.
+    depth_w = cfg.Hmin + torch.arange(cfg.nz + 1, **cfg.farr_kwargs).view(1, -1, 1) * dz
+    lsc_geo = cfg.vonKar * (depth_w + cfg.z0_surf)        # (1, nz+1, 1), broadcasts over ne
+    
     stable  = N2 > 0
-    L_lim   = cfg.gls_galp * torch.sqrt(
-        2.0 * tke_new / torch.clamp(N2, min=cfg.gls_N2_min))
-    psi_lim = (p.cm0 ** p.rp) * (tke_new ** p.rm) * (L_lim ** p.rn)
+    lsc_gal = cfg.gls_galp * torch.sqrt(2.0 * tke_new / torch.clamp(N2, min=cfg.gls_N2_min))
+    lsc_gal = torch.where(stable, lsc_gal, torch.full_like(lsc_gal, float('inf')))
+
+    lsc_max = torch.minimum(lsc_geo, lsc_gal)
+    psi_lim = (p.cm0 ** p.rp) * (tke_new ** p.rm) * (lsc_max ** p.rn)
 
     interior = torch.zeros_like(stable); interior[:, 2:-2] = True
-    mask = stable & interior
-    if p.rn < 0:
-        psi_new = torch.where(mask, torch.maximum(psi_new, psi_lim), psi_new)
+    if p.rn < 0:   # psi decreases with l -> floor on psi
+        psi_new = torch.where(interior, torch.maximum(psi_new, psi_lim), psi_new)
     else:
-        psi_new = torch.where(mask, torch.minimum(psi_new, psi_lim), psi_new)
+        psi_new = torch.where(interior, torch.minimum(psi_new, psi_lim), psi_new)
 
     return psi_new
 
@@ -233,8 +239,8 @@ def _compute_mixing(tke, diss, M2, model: Model):
     c_mu, c_mu_prim  = _get_c_mu(model, alpha_m, alpha_n)
 
     cff_visc = tke ** 2 / diss
-    Akv = torch.clamp(cff_visc * c_mu,      min=cfg.gls_azm_min, max=1.0)
-    Akt = torch.clamp(cff_visc * c_mu_prim, min=cfg.gls_azt_min, max=1.0)
+    Akv = torch.clamp(cff_visc * c_mu,      min=cfg.gls_azm_min, max=cfg.az_max)
+    Akt = torch.clamp(cff_visc * c_mu_prim, min=cfg.gls_azt_min, max=cfg.az_max)
     return Akv, Akt
 
 
@@ -256,12 +262,12 @@ def _get_psi_bc(u_star, tke, model: Model):
     d0 = cfg.Hmin
 
     cm0    = p.cm0
-    vonKar = cfg.gls_vonKar
+    vonKar = cfg.vonKar
     rp, rm, rn = p.rp, p.rm, p.rn
     cff_flx = -rn * cm0 ** (rp + 1.0) * vonKar / p.sig_psi
 
     # --- Surface (Charnock roughness) ---
-    z0_s = torch.clamp(cfg.gls_chk * u_star ** 2, min=cfg.gls_zos_min)
+    z0_s = torch.full_like(u_star, cfg.z0_surf)
     k_s0, k_s1 = tke[:, 0, :], tke[:, 1, :]
 
     psi_s0 = cm0**rp * k_s0**rm * (vonKar * (z0_s + d0     ))**rn
@@ -301,10 +307,10 @@ def _get_Fwall(tke, diss, model: Model):
 
     dz  = grd.dz
     d_s = cfg.Hmin + torch.arange(nz + 1, **cfg.farr_kwargs).view(1, nz + 1, 1) * dz
-    d_s = d_s + cfg.gls_zos_min            # include roughness, consistent with the BCs
+    d_s += cfg.z0_surf
 
     L = torch.clamp(p.cm0 ** 3 * tke ** 1.5 / diss, min= cfg.gls_lsc_min)
-    F = 1.0 + 1.33 * (L / cfg.gls_vonKar) ** 2 * (1.0 / d_s) ** 2
+    F = 1.0 + 1.33 * (L / cfg.vonKar) ** 2 * (1.0 / d_s) ** 2
 
     return torch.clamp(F, max=1e4)
 

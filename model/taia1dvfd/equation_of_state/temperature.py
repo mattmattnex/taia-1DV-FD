@@ -26,9 +26,13 @@ def temperature_equation_step(model: Model,
     ops   = model.operators
     
     # --- Variables ---
-    temp_old = state.temp
-    azt      = state.az_t
-    sig_z    = state.sig_z_t
+    azt   = state.az_t
+    sig_z = state.sig_z_t
+    dB_w  = state.dB_w
+    
+    # --- Solving for temperature anomaly ---
+    temp_ref    = cfg.eos_T0
+    temp_old = state.temp - temp_ref
     
     # --- Parameters ---
     fkw = cfg.farr_kwargs
@@ -61,14 +65,10 @@ def temperature_equation_step(model: Model,
     Fk = 0
     rhs = temp_old + Fk*dt
     
-    # if cfg.temp_stochastic:
-    #     Gk = sig_z * (Dz @ temp_old)
-    #     rhs -= Gk*state.dB_c
-    
     # --- Stochastic transport (face-based, discrete fluctuation-dissipation balance) ---
     if cfg.temp_stochastic:
         dTdz_w  = ops.d_dz_c2w @ temp_old                  # (ne, nz+1, 1) dT/dz at faces, 0 at boundary faces
-        noise_w = state.sig_z_t * dTdz_w * state.dB_w      # sigma_t and dB at faces
+        noise_w = sig_z * dTdz_w * dB_w      # sigma_t and dB at faces
         Gk      = (noise_w[:, :-1] + noise_w[:, 1:]) / 2**0.5
         rhs    -= Gk
     
@@ -87,6 +87,4 @@ def temperature_equation_step(model: Model,
         rhs[:, -1,  :] = temp_botm.unsqueeze(-1)
     
     # --- Solver ---
-    # state.temp[:] = torch.linalg.solve(Lop, rhs)
-    # state.temp[:] = thomas_solve(Lop, rhs)
-    state.temp[:] = pcr_solve(Lop, rhs)
+    state.temp[:] = pcr_solve(Lop, rhs) + temp_ref
