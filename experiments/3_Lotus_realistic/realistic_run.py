@@ -1,6 +1,7 @@
 import numpy as np
 import netCDF4 as nc
 import torch
+import os
 
 from taia1dvfd.core  import Config, Grid, State, Model
 from taia1dvfd.utils import SaveNetCDF, StepProfiler
@@ -27,13 +28,13 @@ def make_config(mix_model: str) -> Config:
 
     cfg.ne   = 1000
     cfg.nz   = 300
-    cfg.Hmin = 1.0
+    cfg.Hmin = 0.0
     cfg.Hmax = 150.0
     cfg.lat  = 34.98
     cfg.device = "cuda:0"
 
     # --- Time ---
-    cfg.dt   = 720
+    cfg.dt   = 1800
     cfg.tend = 3600.0 * 24 * 160
     cfg.wind_Ta = 6 * 3600
     
@@ -51,7 +52,7 @@ def make_config(mix_model: str) -> Config:
     cfg.temp_bc_top = "neumann"
     cfg.temp_bc_btm = "neumann"
 
-    # --- EOS (uniform salinity, Sargasso value) ---
+    # --- EOS (Sargasso value) ---
     cfg.Ssurf = 36.5
     cfg.Sbotm = 36.5
 
@@ -84,6 +85,15 @@ torch.manual_seed(SEED_FORCING)
 met = forcing.read_lotus_met(n_days=cfg_ref.tend / 86400 + 1)
 ua_forcing = forcing.generate_lotus_wind(model_ref, met, window_len=24)
 Q_ns, Q_sw = forcing.generate_lotus_heat_flux(model_ref, met, ua_forcing)
+
+# Saving forcing for analysis
+np.savez(os.path.join(cfg_ref.save_folder, 'lotus_forcing.npz'),
+    ua = ua_forcing.cpu().numpy(),
+    Q_ns = Q_ns.cpu().numpy(),
+    Q_sw = Q_sw.cpu().numpy(),
+    dt = cfg_ref.dt,
+    tend = cfg_ref.tend
+)
 
 # --- Initial temperature (13 May 1982) ---
 with nc.Dataset('/home/mnex/Desktop/1DV_FD/LOTUS/obs/lotusnstemp.epic', 'r') as f:

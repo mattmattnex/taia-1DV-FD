@@ -1,11 +1,8 @@
-import math
-import numpy as np
 import torch
-import netCDF4 as nc
-from taia1dvfd.core import Model
+import numpy as np
 
-LOTUS_MET_FILE = '/home/mnex/Desktop/1DV_FD/LOTUS/obs/lotusmet.epic'
-LOTUS_BAD_VALUE = 1e30             # EPIC fill value is 9.96921e+36
+from taia1dvfd.core import Model
+from .utils import _window_mean, _ornstein_anomaly
 
 # --- Physical constants ---
 STEFAN_BOLTZMANN = 5.67e-8         # W m-2 K-4
@@ -14,116 +11,6 @@ CP_AIR = 1004.67                   # J kg-1 K-1
 L_VAP = 2.5e6                      # J kg-1
 KELVIN = 273.15
 
-
-# =====================================================================
-#  Observations
-# =====================================================================
-def read_lotus_met(n_days: float = 160, path: str = LOTUS_MET_FILE) -> dict:
-    """
-    Read the LOTUS VAWR record (float64 numpy arrays at observation times).
-
-      t     : seconds since the first record, from the EPIC time / time2 pair
-              (so gaps and irregular steps are handled, no fixed 900 s assumed)
-      wnde, wndn (m/s), atmp, stmp (degC), srad (W/m2), bpr (hPa)
-
-    Fill values are replaced by linear interpolation in time.
-    """
-    with nc.Dataset(path, 'r') as f:
-        f.set_auto_mask(False)
-        jday = f.variables['time'][:].astype(np.float64)       # true Julian day
-        msec = f.variables['time2'][:].astype(np.float64)      # ms since 00:00 GMT
-        t_all = (jday - jday[0]) * 86400 + (msec - msec[0]) * 1e-3
-
-        n_obs = min(np.searchsorted(t_all, n_days * 86400) + 2, len(t_all))
-        met = {'t': t_all[:n_obs]}
-        for name in ['wnde', 'wndn', 'atmp', 'stmp', 'srad', 'bpr']:
-            raw = f.variables[name][:n_obs, 0, 0, 0].astype(np.float64)
-            met[name] = _fill_gaps(met['t'], raw, name)
-
-    met['srad'] = np.maximum(met['srad'], 0.0)                 # no negative night-time offsets
-    return met
-
-
-def _fill_gaps(t: np.ndarray, x: np.ndarray, name: str) -> np.ndarray:
-    bad = ~np.isfinite(x) | (np.abs(x) > LOTUS_BAD_VALUE)
-    if bad.all():
-        raise ValueError(f'{name}: no valid data')
-    if bad.any():
-        print(f'{name}: {bad.sum()} fill values interpolated')
-        x = x.copy()
-        x[bad] = np.interp(t[bad], t[~bad], x[~bad])
-    return x
-
-
-def _window_mean(t_obs: np.ndarray, x: np.ndarray, t_start: np.ndarray, dt: float) -> np.ndarray:
-    """Mean of x over [t_start, t_start + dt] (trapezoidal cumulative integral)."""
-    x_int = np.concatenate(([0.0], np.cumsum(0.5 * (x[1:] + x[:-1]) * np.diff(t_obs))))
-    return (np.interp(t_start + dt, t_obs, x_int) - np.interp(t_start, t_obs, x_int)) / dt
-
-
-def _ornstein_anomaly(ne: int, nt: int, dt: float, Ta: float, std: torch.Tensor,
-                      fkw: dict) -> torch.Tensor:
-    """Zero-mean OU anomaly (ne, nt), eta(0) = 0, stationary std = std (scalar or (nt,))."""
-    c1 = math.exp(-dt / Ta)
-    c2 = math.sqrt(1.0 - c1**2)
-    std = torch.as_tensor(std, **fkw).expand(nt)
-
-    xi = torch.randn(ne, nt, **fkw)
-    eta = torch.zeros(ne, nt, **fkw)
-    for kt in range(1, nt):
-        eta[:, kt] = c1 * eta[:, kt-1] + c2 * std[kt] * xi[:, kt]
-    return eta
-
-
-# =====================================================================
-#  Wind
-# =====================================================================
-def generate_lotus_wind(model: Model, met: dict, window_len: int = 24) -> torch.Tensor:
-    """
-    Random 10 m wind (ne, nt) complex:
-
-      ua = m_obs(t) + eta_u + i eta_v
-
-    m_obs  : block means of the observations (window_len records per block)
-    eta_*  : zero-mean OU anomalies, memory cfg.wind_Ta, std = block std of each component
-
-    Changes from the previous version:
-      - the OU acts on the anomaly, so the ensemble mean follows the observations
-        (relaxing x towards m(t) made the mean a lagged, low-passed copy of m)
-      - one real N(0, 1) per component (complex randn has variance 1/2 per part, and
-        (std_u + i std_v) * complex noise mixed the two components)
-    """
-    cfg = model.config
-    fkw = cfg.farr_kwargs
-    ckw = cfg.carr_kwargs
-    ne, nt, dt = cfg.ne, cfg.nt, cfg.dt
-
-    # --- Block statistics ---
-    t_obs = met['t']
-    n_blocks = len(t_obs) // window_len
-    t_block = t_obs[:n_blocks * window_len].reshape(n_blocks, window_len)[:, 0]
-
-    def block_stats(x):
-        blocks = x[:n_blocks * window_len].reshape(n_blocks, window_len)
-        return blocks.mean(axis=1), blocks.std(axis=1, ddof=1)
-
-    ua_mean, ua_std = block_stats(met['wnde'])
-    va_mean, va_std = block_stats(met['wndn'])
-
-    # --- Block index of each model step ---
-    t_model = np.arange(nt) * dt
-    kb = np.clip(np.searchsorted(t_block, t_model, side='right') - 1, 0, n_blocks - 1)
-
-    wind_mean = torch.tensor(ua_mean[kb] + 1j * va_mean[kb], **ckw)          # (nt,)
-    eta_u = _ornstein_anomaly(ne, nt, dt, cfg.wind_Ta, torch.tensor(ua_std[kb], **fkw), fkw)
-    eta_v = _ornstein_anomaly(ne, nt, dt, cfg.wind_Ta, torch.tensor(va_std[kb], **fkw), fkw)
-
-    return wind_mean[None, :] + eta_u + 1j * eta_v
-
-
-# =====================================================================
-#  Heat flux (bulk formulae, option A: no external data)
-# =====================================================================
 def generate_lotus_heat_flux(model: Model, met: dict, ua_forcing: torch.Tensor,
                              rh_mean: float = 0.78,
                              rh_std: float = 0.05,

@@ -87,33 +87,38 @@ class LotusTools:
                       hmax: float = 50.0, 
                       figsize: tuple = (10, 4), 
                       colors = None):
-        
+
         fig, ax = plt.subplots(1, 2, figsize = figsize, sharey = True)
 
         kplot = 0
         for label, file in files_dict.items():
             path = self.output_folder + file
-            z, uem, uev = self.get_var(path, 'ue', kt = -1, cplx = True)
-            
+            z, t, uem, uev = self.get_var(path, 'ue', cplx = True)
+
+            # 20 days mean, skip the first 10
+            idx_t = np.where(t/86400 >= 10)[0]
+            uem = np.mean(uem[idx_t, :], axis = 0)
+            uev = np.mean(uev[idx_t, :], axis = 0)
+
             if colors is not None:
                 color = colors[kplot]
             else:
                 color = f'C{kplot}'
-            
+
             # u-profile
             ax[0].plot(uem.real, z, label = label, color = color)
             ax[0].fill_betweenx(z, uem.real - uev.real**0.5,
                                 uem.real + uev.real**0.5,
                                 alpha = 0.1, color = color)
-            
+
             # v-profile
             ax[1].plot(uem.imag, z, label = label, color = color)
             ax[1].fill_betweenx(z, uem.imag - uev.imag**0.5,
                                 uem.imag + uev.imag**0.5,
                                 alpha = 0.1, color = color)
-            
+
             kplot += 1
-            
+
         # --- LOTUS obs errorbar ---
         ax[0].errorbar(self.uobs[0], self.zobs, xerr = self.DWC_std, color = 'k', ecolor = 'k', fmt = 'o', label = 'LOTUS', capsize=5)
         ax[0].set_title(r'$u_e(z)$')
@@ -201,3 +206,12 @@ class LotusTools:
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc='center left', bbox_to_anchor=(1.0, 0.5), ncol=1)
         fig.tight_layout()
+        
+        
+if __name__ == "__main__":
+    NENS = 1000
+    lotus = LotusTools("/home/mnex/Desktop/1DV_FD/experiments/2_Lotus_stationary/output/")
+
+    files_closure_impact = {r'$k-kl$' : f'k-kl_ne{NENS}.nc',}
+    lotus.plot_profiles(files_closure_impact, figsize=(8,4))
+    plt.show()
