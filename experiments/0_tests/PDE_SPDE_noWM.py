@@ -35,12 +35,12 @@ for conf in CONFIGS:
     cfg.dt   = DT
     cfg.tend = TEND
 
-    # --- Wind: mean eastward, fluctuations in the meridional direction only ---
+    # --- Wind ---
     cfg.wind_mean = 6.0 + 0.0j
     cfg.wind_std  = 0.0 + 1.0j
     
     # --- Stochastic bool ---
-    cfg.temp_stochastic = False         # No stochastic on tracers for T and S
+    cfg.temp_stochastic = False
     cfg.salt_stochastic = False
 
     if conf == 'PDE':

@@ -11,10 +11,10 @@ SEED = 1234
 CLOSURES = ['kpp', 'k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke']
 NE   = 1000
 NZ   = 300
-HMIN = 1.0             # LOTUS: first metre truncated, as in Li et al.
+HMIN = 1.0
 HMAX = 100.0
-LAT  = 34.98           # gives f = 0.836e-4 s-1 (Li et al.)
-DT   = 3600.0          # Li et al. use 1800 s
+LAT  = 34.98
+DT   = 3600.0
 TEND = 3600.0 * 24 * 30
 
 for closure in CLOSURES:
@@ -35,13 +35,13 @@ for closure in CLOSURES:
     cfg.dt   = DT
     cfg.tend = TEND
 
-    # --- Wind: mean eastward, fluctuations in the meridional direction only ---
+    # --- Wind ---
     cfg.wind_mean = 6.0 + 0.0j
     cfg.wind_std  = 0.0 + 1.0j
     
     # --- Stochastic bool ---
     cfg.vel_stochastic  = True
-    cfg.temp_stochastic = True         # No stochastic on tracers for T and S
+    cfg.temp_stochastic = True
     cfg.salt_stochastic = True
 
     # --- Waves ---

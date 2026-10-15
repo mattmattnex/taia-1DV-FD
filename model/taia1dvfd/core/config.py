@@ -28,7 +28,6 @@ class Config:
     rho_a: float = 1.0
     Cd: float = 1.3e-3
     g: float = 9.81
-    cp: float = 3985.0
     
     # --- Wind ---
     wind_mean: complex = 5.0 + 0j
@@ -112,6 +111,7 @@ class Config:
     eos_S0: float = 38   # Reference Salinity (PSU)
     beta_T: float = 2e-4 # Thermal expansion coefficient
     beta_S: float = 1e-3 # Haline contraction coefficient
+    eos_cp: float = 3985.0
     
     # --- Salinity model ---
     salt_bc_top: str = "neumann"

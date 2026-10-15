@@ -9,21 +9,19 @@ def tracer_equation_step(model: Model,
                          bc_btm:     str,
                          value_top:  torch.Tensor | None = None,
                          value_btm:  torch.Tensor | None = None,
-                         flux_top:   float = 0.0,
-                         flux_btm:   float = 0.0,
+                         flux_top:   float | torch.Tensor = 0.0,
+                         flux_btm:   float | torch.Tensor = 0.0,
+                         source:     torch.Tensor | None = None,
                          ) -> torch.Tensor:
     """
-    One linear-implicit Euler-Maruyama step of an LU-transported tracer on cell centres,
-    in banded form (no dense (ne, nz, nz) matrices).
-
-      d C = dz( a_t dz C ) dt  -  sigma_t dz C . dB      (face-based noise, see below)
-
     Solved for the anomaly C - tracer_ref (float32 roundoff scales with the anomaly).
 
       tracer     : (ne, nz, 1) current values (not modified)
       bc_top/btm : "neumann" (flux) or "dirichlet" (value imposed in the boundary cell)
       value_*    : (ne,) or (ne, 1) Dirichlet values, in tracer units (not anomalies)
-      flux_*     : kinematic fluxes w'C' at the boundary faces, positive upward
+      flux_*     : kinematic fluxes w'C' at the boundary faces, positive upward,
+                   float or (ne,) tensor
+      source     : (ne, nz) or (1, nz) interior source dC/dt (e.g. penetrating shortwave)
     Returns the new tracer (ne, nz, 1).
     """
     state = model.state
@@ -61,6 +59,10 @@ def tracer_equation_step(model: Model,
     # --- RHS ---
     # ==================================================================
     rhs = C_old.clone()
+
+    # --- Interior source ---
+    if source is not None:
+        rhs = rhs + dt * source
 
     # --- Stochastic transport (face-based, discrete fluctuation-dissipation balance) ---
     if stochastic:
