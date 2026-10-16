@@ -19,6 +19,16 @@ def met_start_day(met_file: str) -> float:
     with nc.Dataset(met_file) as f:
         f.set_auto_mask(False)
         return epic_days(f)[0]
+    
+def _fill_missing_in_depth(depth, field):
+    """Linear interpolation in depth of NaN sensors, profile by profile (no extrapolation)."""
+    for kt in np.where(np.isnan(field).any(axis=1))[0]:
+        valid = ~np.isnan(field[kt])
+        if valid.sum() >= 2:
+            inside = (depth >= depth[valid][0]) & (depth <= depth[valid][-1])
+            field[kt, inside] = np.interp(depth[inside], depth[valid], field[kt, valid])
+    return field
+
 
 def read_lotus_temp(temp_file: str, t0_day: float, n_days: float):
     """
@@ -41,15 +51,47 @@ def read_lotus_temp(temp_file: str, t0_day: float, n_days: float):
     t_days, temp = t_days[keep], temp[keep]
 
     # --- Missing sensors: linear interpolation in depth (no extrapolation) ---
-    for kt in np.where(np.isnan(temp).any(axis=1))[0]:
-        valid = ~np.isnan(temp[kt])
-        if valid.sum() >= 2:
-            inside = (depth >= depth[valid][0]) & (depth <= depth[valid][-1])
-            temp[kt, inside] = np.interp(depth[inside], depth[valid], temp[kt, valid])
+    temp = _fill_missing_in_depth(depth, temp)
 
     print(f'{np.isnan(temp).any(axis=1).sum()} profiles still incomplete after filling')
     return t_days, depth, temp
 
+def read_lotus_vel(vel_file: str, t0_day: float, n_days: float):
+    """
+    Returns
+      t_days : (nt,)       days since the model start
+      depth  : (nsens,)    sensor depths, positive downward, increasing
+      u      : (nt, nsens) eastward velocity  [m/s], missing sensors filled by interpolation in depth
+      v      : (nt, nsens) northward velocity [m/s], idem
+    """
+    with nc.Dataset(vel_file) as f:
+        f.set_auto_mask(False)
+        t_days = epic_days(f) - t0_day
+        depth  = np.abs(f.variables['depth'][:].astype(np.float64))
+        u      = f.variables['east' ][:, :, 0, 0].astype(np.float64)
+        v      = f.variables['north'][:, :, 0, 0].astype(np.float64)
+
+    order = np.argsort(depth)
+    depth, u, v = depth[order], u[:, order], v[:, order]
+
+    # --- Bad values: a sensor is invalid if either component is bad ---
+    bad = (~np.isfinite(u) | (np.abs(u) > BAD) |
+           ~np.isfinite(v) | (np.abs(v) > BAD))
+    u[bad] = np.nan
+    v[bad] = np.nan
+
+    # --- cm/s -> m/s ---
+    u *= 1e-2
+    v *= 1e-2
+
+    keep = (t_days >= 0.0) & (t_days <= n_days)
+    t_days, u, v = t_days[keep], u[keep], v[keep]
+
+    u = _fill_missing_in_depth(depth, u)
+    v = _fill_missing_in_depth(depth, v)
+
+    print(f'{np.isnan(u).any(axis=1).sum()} velocity profiles still incomplete after filling')
+    return t_days, depth, u, v
 
 # =====================================================================
 #  MLD on the sensor grid
