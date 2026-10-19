@@ -15,7 +15,7 @@ class Config:
     dt: float = 1800.0                # Time step (s)
     tend: float = 3600.0 * 24 * 20    # End time (s)
 
-    # --- Simulation ---
+    # --- Saving in netCDF ---
     save_folder = "/home/mnex/Desktop/1DV_FD/experiments/"
     file_name = f"output.nc"
     var_to_save = ['temp', 'mld', 'N2']
@@ -28,7 +28,7 @@ class Config:
     rho_a: float = 1.0
     Cd: float = 1.3e-3
     g: float = 9.81
-    
+
     # --- Wind ---
     wind_mean: complex = 5.0 + 0j
     wind_std:  list = [5.0, 0.0]
