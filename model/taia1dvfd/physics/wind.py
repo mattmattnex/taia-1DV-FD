@@ -21,13 +21,13 @@ def wind_ornstein_step(model: Model):
     ua_m = cfg.wind_mean
     
     # Wind forcing coefficients
-    c1 = c1 = math.exp(-cfg.dt / cfg.wind_Ta)
-    c2 = math.sqrt(1 - c1**2) * cfg.wind_std
+    c1 = c1 = torch.exp(-torch.tensor(cfg.dt / cfg.wind_Ta, **cfg.farr_kwargs))
+    c2 = torch.sqrt(1 - c1**2) * torch.tensor(cfg.wind_std, **cfg.farr_kwargs)
     
     # Random wind fluctuation
-    rd_cplx = torch.randn_like(ua.real) + 1j * torch.randn_like(ua.real)
+    rn = torch.randn(2, cfg.ne, 1, 1, **cfg.farr_kwargs)
 
     # Wind velocity update
-    ua_new = ua_m + c1 * (ua - ua_m) + c2 * rd_cplx
+    ua_new = ua_m + c1 * (ua - ua_m) + c2[0]*rn[0] + 1j*c2[1]*rn[1]
     
     model.state.ua[:] = ua_new

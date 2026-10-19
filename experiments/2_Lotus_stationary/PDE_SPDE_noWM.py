@@ -14,7 +14,7 @@ NZ   = 300
 HMIN = 1.0
 HMAX = 100.0
 LAT  = 34.98
-DT   = 3600.0
+DT   = 1800.0
 TEND = 3600.0 * 24 * 30
 
 for conf in CONFIGS:
@@ -29,6 +29,10 @@ for conf in CONFIGS:
     cfg.Hmin = HMIN
     cfg.Hmax = HMAX
     cfg.lat  = LAT
+
+    cfg.us0 = 0.068
+    cfg.hs  = 4.775
+    
     cfg.device = "cuda:0"
 
     # --- Time ---
@@ -37,7 +41,7 @@ for conf in CONFIGS:
 
     # --- Wind ---
     cfg.wind_mean = 6.0 + 0.0j
-    cfg.wind_std  = 0.0 + 1.0j
+    cfg.wind_std  = [0.0, 1.0]
     
     # --- Stochastic bool ---
     cfg.temp_stochastic = False
@@ -69,7 +73,7 @@ for conf in CONFIGS:
     cfg.kpp_azt_min = 1e-4
 
 # --- Finalization ---
-    cfg.save_folder = f"/home/mnex/Desktop/1DV_FD/experiments/0_tests/output/"
+    cfg.save_folder = f"/home/mnex/Desktop/1DV_FD/experiments/2_Lotus_stationary/output/"
     cfg.file_name   = f"{conf}_ne{cfg.ne}.nc"
     cfg.var_to_save = ['ue', 'ua', 'az_m', 'tke']
     cfg.finalize()

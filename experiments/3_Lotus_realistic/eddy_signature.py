@@ -14,8 +14,8 @@ MET_FILE = '/home/mnex/Desktop/1DV_FD/LOTUS/obs/lotusmet.epic'
 VEL_FILE = '/home/mnex/Desktop/1DV_FD/LOTUS/obs/lotusnsvel.epic'
 FPS = 30
 
-days_to_plot = range(100, 120)
-average_window = 4
+days_to_plot = range(90, 130)
+average_window = 8
 
 zlim = (-50, 0)
 vmax = 1.0
@@ -52,7 +52,7 @@ def update(kt):
     ax.set_xlabel(r'$u$ [m/s]')
     ax.set_ylabel(r'$v$ [m/s]')
     ax.set_box_aspect((1, 1, 1.6))
-    ax.view_init(elev=20, azim=-60)
+    ax.view_init(elev=90, azim=90)
     ax.set_zlabel('Depth [m]')
     ax.plot([0, 0], [0, 0], [*zlim], color='0.4', lw=0.8) # Mooring
     ax.set_title(f'LOTUS — day {t[kt]:.2f}')

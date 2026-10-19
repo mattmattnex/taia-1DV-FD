@@ -31,7 +31,7 @@ class Config:
     
     # --- Wind ---
     wind_mean: complex = 5.0 + 0j
-    wind_std:  float = 5.0
+    wind_std:  list = [5.0, 0.0]
     wind_Ta:   float = 86400.0
 
     # --- Itô-Stokes ---
@@ -126,10 +126,6 @@ class Config:
     temp_stochastic: bool = False
     Tsurf:  float = 20.5 # Initial surface T
     Tbotm:  float = 20.0 # Initial bottom T
-    Fsolar: float = 0
-    Qnet:   float = 0
-    R0:     float = 0
-    abs_profile_type: str = 'I' # Jerlov absorption profile type (I, IA, IB, II)
 
     # --- Derived quantities (set in finalize) ---
     f:          float = None
