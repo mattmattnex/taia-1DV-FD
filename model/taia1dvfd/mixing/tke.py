@@ -78,7 +78,9 @@ def tke_step(u_star: torch.Tensor, model: Model) -> None:
     # --- mixing lengths from the NEW en  ->  avm, avt, dissl ---
     # ==========================================================
     lk, le = _mixing_lengths(en_new, N2, cfg, grd)
-    sq_en   = torch.sqrt(en_new)
+    state.lsc[:] = lk # mixing length, used as the noise correlation length
+    
+    sq_en = torch.sqrt(en_new)
     state.dissl[:] = sq_en / le
 
     azm_raw = Ck * lk * sq_en

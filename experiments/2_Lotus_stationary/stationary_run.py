@@ -10,7 +10,7 @@ import taia1dvfd.equation_of_state as eos
 SEED = 1234
 CLOSURES = ['kpp', 'k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke']
 NE   = 1000
-NZ   = 300
+NZ   = 512
 HMIN = 1.0
 HMAX = 100.0
 LAT  = 34.98
@@ -37,7 +37,7 @@ for closure in CLOSURES:
 
     # --- Wind ---
     cfg.wind_mean = 6.0 + 0.0j
-    cfg.wind_std  = 0.0 + 1.0j
+    cfg.wind_std  = [0.0, 1.0]
     
     # --- Stochastic bool ---
     cfg.vel_stochastic  = True
@@ -46,8 +46,8 @@ for closure in CLOSURES:
 
     # --- Waves ---
     cfg.wave_mixing  = True
-    cfg.tke_wave_mix = True
-    cfg.gls_wave_mix = True
+    cfg.tke_wave_mix = False
+    cfg.gls_wave_mix = False
 
     # --- EOS: neutral column (uniform T and S, N2 = 0) ---
     cfg.Tsurf = cfg.Tbotm = 20.0

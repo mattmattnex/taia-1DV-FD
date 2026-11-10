@@ -10,7 +10,7 @@ import taia1dvfd.equation_of_state as eos
 SEED = 1234
 CONFIGS = ['PDE', 'SPDE-noWM', 'SPDE']
 NE   = 1000
-NZ   = 300
+NZ   = 400
 HMIN = 1.0
 HMAX = 100.0
 LAT  = 34.98

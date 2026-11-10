@@ -63,8 +63,8 @@ class State:
         self.sig_z_t = torch.zeros(ne, nz+1, 1, **fkw)
         
         # Noise
-        self.dB_w  = torch.zeros(ne, nz+1, 1, **fkw)
-        self.dB_c  = torch.zeros(ne,   nz, 1, **fkw)
+        self.dB_w   = torch.zeros(ne, nz+1, 1, **fkw)
+        self.dB_c   = torch.zeros(ne,   nz, 1, **fkw)
 
         # Vertical mixing
         self.az_m = torch.zeros(ne, nz+1, 1, **fkw)

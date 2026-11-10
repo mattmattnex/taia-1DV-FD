@@ -36,3 +36,4 @@ def kpp_step(u_star, model:Model):
         
     model.state.az_m[:] = nu + cfg.kpp_azm_min
     model.state.az_t[:] = nu + cfg.kpp_azt_min
+    model.state.lsc[:] = nu / u_star
