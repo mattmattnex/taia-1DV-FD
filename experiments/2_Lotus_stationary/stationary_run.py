@@ -8,11 +8,11 @@ from taia1dvfd.utils import SaveNetCDF, StepProfiler
 SEED = 1234
 CLOSURES = ['kpp', 'k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke']
 NE   = 1000
-NZ   = 512
+NZ   = 300
 HMIN = 1.0
 HMAX = 100.0
 LAT  = 34.98
-DT   = 3600.0
+DT   = 1800.0
 TEND = 3600.0 * 24 * 30
 
 for closure in CLOSURES:

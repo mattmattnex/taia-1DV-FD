@@ -11,7 +11,6 @@ class State:
 
     # Wind, waves and ekman vel
     ua: torch.Tensor = field(init=False)
-    us: torch.Tensor = field(init=False)
     ue: torch.Tensor = field(init=False)
     
     # Noise
@@ -20,6 +19,9 @@ class State:
     sig_h: torch.Tensor = field(init=False)
     sig_z_m: torch.Tensor = field(init=False)
     sig_z_t: torch.Tensor = field(init=False)
+    
+    # Waves
+    us: torch.Tensor = field(init=False)
 
     # Vertical mixing
     az_m: torch.Tensor = field(init=False)
@@ -54,7 +56,6 @@ class State:
 
         # Physics
         self.ua    = torch.zeros(ne,    1, 1, **ckw)
-        self.us    = torch.zeros(ne, nz+1, 1, **ckw)
         self.ue    = torch.zeros(ne, nz+1, 1, **ckw)
         
         # Sigmas
@@ -65,6 +66,9 @@ class State:
         # Noise
         self.dB_w   = torch.zeros(ne, nz+1, 1, **fkw)
         self.dB_c   = torch.zeros(ne,   nz, 1, **fkw)
+
+        # Wave
+        self.us    = torch.zeros(ne, nz+1, 1, **ckw)
 
         # Vertical mixing
         self.az_m = torch.zeros(ne, nz+1, 1, **fkw)

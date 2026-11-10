@@ -15,7 +15,6 @@ def noise_LU_init(model: Model):
 
 def noise_LU_step(model:Model):
     cfg = model.config
-    grd = model.grid
     state = model.state
     
     # Fetch
