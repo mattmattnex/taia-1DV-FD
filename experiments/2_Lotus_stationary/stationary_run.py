@@ -1,11 +1,9 @@
-import torch
-
-from taia1dvfd.core  import Config, Grid, State, Model
-from taia1dvfd.utils import SaveNetCDF, StepProfiler
-
-import taia1dvfd.physics as phy
-import taia1dvfd.mixing  as mix
 import taia1dvfd.equation_of_state as eos
+import taia1dvfd.mixing as mix
+import taia1dvfd.physics as phy
+import torch
+from taia1dvfd.core import Config, Grid, Model, State
+from taia1dvfd.utils import SaveNetCDF, StepProfiler
 
 SEED = 1234
 CLOSURES = ['kpp', 'k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke']

@@ -1,4 +1,3 @@
-import numpy as np
 import netCDF4 as nc
 
 def get_model_variable(file_name:str, var_name: str, cplx: bool = False, kt:int | None = None):
@@ -17,7 +16,10 @@ def get_model_variable(file_name:str, var_name: str, cplx: bool = False, kt:int 
             t   = data['time'][:]
 
             # --- Find shape ---
-            z = z_c if var_m.shape[1] == z_c.shape[0] else z_w
+            if len(var_m.shape) > 1:
+                z = z_c if var_m.shape[1] == z_c.shape[0] else z_w
+            else:
+                z = 0.0
             
         if kt is not None:
             return z, var_m[kt, :], var_v[kt, :]
