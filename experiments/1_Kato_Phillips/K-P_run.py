@@ -12,7 +12,6 @@ import taia1dvfd.equation_of_state as eos
 #  Constant stress u* = 1 cm/s, no rotation, no buoyancy flux, no waves,
 #  linear stratification N2 = 1e-4 s-2.  Reference: D(t) = 1.05 u* sqrt(t/N).
 # =====================================================================
-
 SEED      = 1234
 MODES     = ['deterministic', 'stochastic']
 CLOSURES  = ['k-kl', 'k-epsilon', 'k-omega', 'gen', 'tke']
@@ -114,10 +113,9 @@ for mode in MODES:
                 # --- Output file ---
                 savefile.init_file(model.state)
                 savefile.save(model.state)
-
-                # ================== Main Loop ==================
-                # Order : Mixing -> Noise -> T/S -> Momentum -> EOS -> MLD
+                
                 # ===============================================
+                # ================== Main Loop ==================
                 for kt in range(cfg.nt):
                     prof.start()
 
@@ -128,25 +126,20 @@ for mode in MODES:
                         mix.tke_step(u_star, model)
                     prof.mark("Mix")
 
-                    # --- Noise ---
-                    phy.noise_LU_step(model)
-                    prof.mark("Sig")
-
-                    # --- Temp Sal ---
+                    # --- Tracers and EOS ---
                     eos.temperature_equation_step(model)
                     eos.salinity_equation_step(model)
-                    prof.mark("T-S")
-
-                    # --- Momentum ---
-                    phy.momentum_equation_step(model)
-                    prof.mark("Phy")
-
-                    # --- EOS ---
                     eos.eos_step(model)
-
+                    prof.mark("T-S")
+                    
                     # --- MLD ---
                     mix.mld_step(model)
                     prof.mark("mld")
+
+                    # --- Momentum ---
+                    phy.noise_LU_step(model)
+                    phy.momentum_equation_step(model)
+                    prof.mark("Phy")
 
                     # --- Update time ---
                     model.state.time += model.config.dt

@@ -94,14 +94,13 @@ for closure in CLOSURES:
     # --- Output file ---
     savefile.init_file(model.state)
     savefile.save(model.state)
-
-    # ================== Main Loop ==================
-    # Order : Wind -> Mixing -> Noise -> T/S -> Momentum -> EOS
+    
     # ===============================================
+    # ================== Main Loop ==================
     for kt in range(cfg.nt):
         prof.start()
 
-        # --- Wind forcing ---
+        # --- Wind ---
         phy.wind_ornstein_step(model)
         u_star = phy.compute_ustar(model).squeeze(-1)
         prof.mark("Wind")
@@ -115,21 +114,16 @@ for closure in CLOSURES:
             mix.tke_step(u_star, model)
         prof.mark("Mix")
 
-        # --- Noise ---
-        phy.noise_LU_step(model)
-        prof.mark("Sig")
-
-        # --- Temp Sal ---
+        # --- Tracers and EOS ---
         eos.temperature_equation_step(model)
         eos.salinity_equation_step(model)
+        eos.eos_step(model)
         prof.mark("T-S")
 
         # --- Momentum ---
+        phy.noise_LU_step(model)
         phy.momentum_equation_step(model)
-        prof.mark("Phy")
-
-        # --- EOS ---
-        eos.eos_step(model)
+        prof.mark("Mom")
 
         # --- Update time ---
         model.state.time += model.config.dt

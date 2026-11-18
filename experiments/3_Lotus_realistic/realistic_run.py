@@ -21,12 +21,17 @@ CLOSURES = [
 ]
 
 RUN_TYPES = {
-    'sto': dict(vel_stochastic=True,  temp_stochastic=True),
-    'det': dict(vel_stochastic=False, temp_stochastic=False),
+    'sto': dict(vel_stochastic=True,  temp_stochastic=True,  salt_stochastic = False),
+    'det': dict(vel_stochastic=False, temp_stochastic=False, salt_stochastic = False),
 }
 
 SEED_FORCING = 1234
 SEED_NOISE   = 5678
+
+DT          = 600                   # s; lagged tracer noise converged within ~2.5 m of MLD at 600 s
+SAVE_EVERY  = int(1800 / DT)        # save every 30 min, as before (file size independent of DT)
+PRINT_EVERY = int(86400 / DT)       # one progress line per simulated day
+WAVES = False
 
 SAVE_FOLDER = "/home/mnex/Desktop/1DV_FD/experiments/3_Lotus_realistic/output/"
 TEMP_FILE   = '/home/mnex/Desktop/1DV_FD/LOTUS/obs/lotusnstemp.epic'
@@ -37,23 +42,24 @@ def make_config(mix_model: str, run_type: str = 'sto') -> Config:
 
     cfg.ne   = 1000
     cfg.nz   = 300
-    cfg.Hmin = 0.0
+    cfg.Hmin = 0.0                  # same as the scheme test
     cfg.Hmax = 150.0
     cfg.lat  = 34.98
     cfg.device = "cuda:0"
 
     # --- Time ---
-    cfg.dt   = 1800
+    cfg.dt   = DT
     cfg.tend = 3600.0 * 24 * 160
     cfg.wind_Ta = 6 * 3600
 
     # --- Wave ---
-    cfg.wave_mixing    = True
-    cfg.tke_wave_mix   = True
-    cfg.gls_wave_mix   = True
+    cfg.wave_mixing    = WAVES
+    cfg.tke_wave_mix   = WAVES
+    cfg.gls_wave_mix   = WAVES
+    if not WAVES:
+        cfg.us0 = 0.0
 
     # --- Stochastic bool ---
-    cfg.salt_stochastic = False
     for name, value in RUN_TYPES[run_type].items():
         setattr(cfg, name, value)
 
@@ -73,6 +79,7 @@ def make_config(mix_model: str, run_type: str = 'sto') -> Config:
     cfg.save_folder = SAVE_FOLDER
     cfg.file_name   = f'lotus_stratif_{mix_model}_{run_type}_ne{cfg.ne}.nc'
     cfg.var_to_save = ['ue', 'temp', 'mld']
+    cfg.save_every  = SAVE_EVERY
     cfg.finalize()
     return cfg
 
@@ -85,7 +92,6 @@ def initial_temperature(model: Model, z_profile: np.ndarray, T_profile: np.ndarr
     T0 = torch.tensor(T_c, **model.config.farr_kwargs)
     return T0.reshape(1, -1, 1).expand(model.config.ne, -1, 1).clone()
 
-
 def mixing_init(model: Model, mix_model: str):
     if mix_model == 'kpp':
         mix.kpp_init(model)
@@ -95,7 +101,6 @@ def mixing_init(model: Model, mix_model: str):
         mix.gls_init(model)
     else:
         raise ValueError(f'Mix model not correct: {mix_model}')
-
 
 def mixing_step(model: Model, mix_model: str, u_star: torch.Tensor):
     if mix_model == 'kpp':
@@ -164,12 +169,13 @@ for run_type in RUN_TYPES:
 
         savefile.init_file(model.state)
         savefile.save(model.state)
-
+        
+        # ===============================================
         # ================== Main Loop ==================
         for kt in range(cfg.nt):
             prof.start()
 
-            # --- Wind and waves ---
+            # --- Wind ---
             model.state.ua[:, 0, 0] = ua_forcing[:, kt]
             u_star = phy.compute_ustar(model).squeeze(-1)
             prof.mark("Wind")
@@ -178,11 +184,7 @@ for run_type in RUN_TYPES:
             mixing_step(model, mix_model, u_star)
             prof.mark("Mix")
 
-            # --- Noise ---
-            phy.noise_LU_step(model)
-            prof.mark("Noise")
-
-            # --- Tracers and EOS ---
+            # --- Tracers and EOS before noise_LU_step (lagged scheme) ---
             eos.temperature_equation_step(model, heat_flux_ns=Q_ns[:, kt], heat_flux_sw=Q_sw[kt])
             eos.salinity_equation_step(model)
             eos.eos_step(model)
@@ -190,11 +192,12 @@ for run_type in RUN_TYPES:
 
             # --- MLD ---
             mix.mld_step(model)
-            prof.mark("mld")
+            prof.mark("Mld")
 
             # --- Momentum ---
+            phy.noise_LU_step(model)
             phy.momentum_equation_step(model)
-            prof.mark("Phy")
+            prof.mark("Mom")
 
             # --- Update time ---
             model.state.time += model.config.dt
@@ -202,7 +205,7 @@ for run_type in RUN_TYPES:
             # --- Save file ---
             savefile.save(model.state)
 
-            if kt % 24 == 0:
+            if kt % PRINT_EVERY == 0:
                 print(prof.format_step(kt, cfg.nt))
 
         print(prof.format_summary())
