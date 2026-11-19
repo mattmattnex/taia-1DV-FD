@@ -93,3 +93,58 @@ def tracer_equation_step(model: Model,
     # ==================================================================
     C_new = pcr(L_lo, L_dg, L_up, rhs.unsqueeze(-1))
     return C_new + tracer_ref
+
+def tracer_batch_equation_step(model: Model,
+                               tracer:     torch.Tensor,     # (ne, nz, nt)
+                               stochastic: bool = False,
+                               flux_top:   float | torch.Tensor = 0.0,
+                               flux_btm:   float | torch.Tensor = 0.0,
+                               source:     torch.Tensor | None = None,
+                               ) -> torch.Tensor:
+    """Diffuse nt tracers that share one diffusivity, zero flux at both ends.
+
+    Same scheme as tracer_equation_step; the tridiagonal matrix is built
+    once and reused across tracers, so this is one pcr solve, not nt.
+    No tracer_ref: BGC concentrations are already near zero and the array
+    is float64, so the anomaly trick buys nothing.
+    """
+    state, cfg, grd = model.state, model.config, model.grid
+
+    dtype = tracer.dtype                          # keep float64 for the BGC
+    azt = state.az_t[..., 0].to(dtype)            # (ne, nz+1)
+    dz  = torch.as_tensor(grd.dz, dtype=dtype, device=tracer.device)
+    dt  = cfg.dt
+
+    C_old = tracer
+
+    # --- D = dz(a_t dz .), zero flux at both ends ---
+    a_face = azt[:, 1:-1]                         # (ne, nz-1)
+    D_up = a_face / dz**2
+    D_lo = a_face / dz**2
+    D_dg = torch.zeros_like(azt[:, :-1])          # (ne, nz)
+    D_dg[:, :-1] -= D_up
+    D_dg[:, 1:]  -= D_lo
+
+    L_lo = -dt * D_lo
+    L_up = -dt * D_up
+    L_dg = 1.0 - dt * D_dg
+
+    # --- RHS, (ne, nz, nt) ---
+    rhs = C_old.clone()
+    if source is not None:
+        rhs = rhs + dt * source
+
+    if stochastic:
+        sig_t = state.sig_z_t[..., 0].to(dtype).unsqueeze(-1)   # (ne, nz+1, 1)
+        dB_w  = state.dB_w[..., 0].to(dtype).unsqueeze(-1)
+        dCdz_w = torch.zeros(C_old.shape[0], C_old.shape[1] + 1, C_old.shape[2], dtype=dtype, device=C_old.device)
+        dCdz_w[:, 1:-1] = (C_old[:, :-1] - C_old[:, 1:]) / dz
+        noise_w = sig_t * dCdz_w * dB_w
+        rhs = rhs - (noise_w[:, :-1] + noise_w[:, 1:]) / 2**0.5
+
+    if not isinstance(flux_top, float) or flux_top != 0.0:
+        rhs[:, 0] += -dt * flux_top / dz
+    if not isinstance(flux_btm, float) or flux_btm != 0.0:
+        rhs[:, -1] += dt * flux_btm / dz
+
+    return pcr(L_lo, L_dg, L_up, rhs)

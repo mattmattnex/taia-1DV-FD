@@ -1,6 +1,9 @@
 import torch
 import numpy as np
 from taia1dvfd.core import Model
+from taia1dvfd.equation_of_state.tracer import tracer_equation_step
+
+
 from .eco3m_coupler import Eco3MCoupler
 from .eco3m_cini import load_cini
 
@@ -15,14 +18,14 @@ def bgc_coupling_init(model: Model) -> Eco3MCoupler:
     bgc.initialize(nz = cfg.nz, ne = cfg.ne)
     bgc.set_dt_bio(cfg.dt)
     bgc.set_dz(np.full(cfg.nz, grd.dz.cpu().numpy()))
-    
+
     if bgc.nbvar != cfg.nbgc:
         raise ValueError(f"cfg.nbgc={cfg.nbgc} but config.ini gives nbvar={bgc.nbvar}")
-    
+
     # Load initial config
     z = -grd.z_c.squeeze().cpu().numpy()          # positive, surface first
     conc = load_cini(CINI_DIR, DEPTH_FILE, z, bgc.varnames)
-    
+
     # Setup initial concentrations
     model.state.bgc[:] = torch.from_numpy(conc).to(cfg.device)   # all members
     cfg.bgc_names = bgc.varnames

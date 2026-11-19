@@ -129,6 +129,7 @@ class Config:
     
     # --- BGC Eco3M coupling ---
     nbgc: int = 0 # number of var in Eco3M (checked in bgc_init)
+    bgc_stochastic: bool = True
 
     # --- Derived quantities (set in finalize) ---
     f:          float = None

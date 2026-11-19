@@ -74,7 +74,7 @@ class SaveNetCDF:
 
         # --- Per-variable NetCDF variables and GPU buffers ---
         for name in cfg.var_to_save:
-            tensor     = getattr(state, name)
+            tensor     = self._resolve(state, name)
             is_complex = torch.is_complex(tensor)
 
             # Vertical location from dimension 1
@@ -102,8 +102,7 @@ class SaveNetCDF:
 
             nc_vars = {}
             for key in keys:
-                nc_vars[key] = self.ds.createVariable(f"{name}_{key}", "f4", dims,
-                                                      chunksizes=chunks)
+                nc_vars[key] = self.ds.createVariable(f"{self._ncname(name)}_{key}", "f4", dims, chunksizes=chunks)
 
             # GPU buffer: (flush_every, n_stats, n_loc)
             buffer = torch.zeros(self.flush_every, len(keys), n_loc, **fkw)
@@ -132,9 +131,9 @@ class SaveNetCDF:
 
         # Statistics computed and stored on the GPU (no sync)
         for name, meta in self.fields.items():
-            tensor = getattr(state, name)
+            tensor = self._resolve(state, name)
             meta["buf"][self.n_buf] = self._stats(tensor, meta["is_complex"])
-
+            
         self.k     += 1
         self.n_buf += 1
 
@@ -155,6 +154,18 @@ class SaveNetCDF:
         else:
             return torch.stack([t.mean(dim=0),
                                 t.var(dim=0, correction=1 if t.shape[0] > 1 else 0)])
+
+    def _resolve(self, state, name):
+        """getattr, plus 'bgc.<varname>' -> a single Eco3M tracer, (ne, nz)."""
+        if "." not in name:
+            return getattr(state, name)
+        attr, sub = name.split(".", 1)
+        tensor = getattr(state, attr)
+        return tensor[:, :, self.cfg.bgc_names.index(sub)]
+
+    @staticmethod
+    def _ncname(name):
+        return name.replace(".", "_")       # dots are awkward in NetCDF names
 
     def flush(self):
         """Copy the buffered records to the CPU and write them in one block."""

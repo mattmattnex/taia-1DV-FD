@@ -1,7 +1,9 @@
 import netCDF4 as nc
 
-def get_model_variable(file_name:str, var_name: str, cplx: bool = False, kt:int | None = None):
+def get_model_variable(file_name:str, var_name: str, cplx: bool = False, kt:int | None = None, print_var: bool = False):
         with nc.Dataset(file_name) as data:
+            if print_var:
+                print(data.variables.keys())
             # --- Variables ---
             if cplx:
                 var_m = data[f'{var_name}_mean_re'][:] + 1j*data[f'{var_name}_mean_im'][:]
