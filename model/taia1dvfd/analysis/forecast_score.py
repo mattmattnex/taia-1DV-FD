@@ -37,10 +37,11 @@ def compute_forecast_score_phi(phi_model_mean, phi_model_var, z_model, t_model, 
 
 def _EPS(mse, var, n_ens, t_model, norm='first', filt=True, ddof=0, return_terms=False):
     
-    cff = (n_ens + 1) / (n_ens - 1) if ddof == 0 else (n_ens + 1) / n_ens
+    cff = (n_ens + 1) / (n_ens - 1) if ddof == 1 else (n_ens + 1) / n_ens
     mse = np.asarray(mse, dtype=float)
     var_c = cff * np.asarray(var, dtype=float)
     eps = np.abs(mse - var_c)
+    eps_raw0 = eps[0]                       # before filtering: same for every run starting at rest
     t_days = np.asarray(t_model) / 86400
 
     if filt:
@@ -54,9 +55,9 @@ def _EPS(mse, var, n_ens, t_model, norm='first', filt=True, ddof=0, return_terms
             mse, var_c = sosfiltfilt(sos, mse), sosfiltfilt(sos, var_c)
 
     if isinstance(norm, str) and norm == 'first':
-        if eps[0] == 0:
+        if eps_raw0 == 0:
             raise ValueError('eps(t0) = 0: use norm=None or an explicit normalisation')
-        scale = eps[0]
+        scale = eps_raw0
     elif norm is not None and norm is not False:
         scale = norm
     else:
