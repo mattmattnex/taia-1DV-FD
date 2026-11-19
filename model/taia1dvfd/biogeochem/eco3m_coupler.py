@@ -40,12 +40,11 @@ class Eco3MCoupler:
         # Data container
         self.CONC = None
 
-    def initialize(self, nz, nx_min=1, nx_max=1, ny_min=1, ny_max=1):
+    def initialize(self, nz, ne=1, ny_min=1, ny_max=1):
         """Initialize dimensions, read the namelist and config.ini, allocate everything."""
         
-        # Initialize dimensions
-        self.lib.eco3m_c_set_dims(nx_min, nx_max, ny_min, ny_max, nz)
-        
+        self.ne = ne
+        self.lib.eco3m_c_set_dims(1, ne, ny_min, ny_max, nz)
         with _chdir(self.workdir):
             self.lib.eco3m_c_initialize()
 
@@ -61,7 +60,7 @@ class Eco3MCoupler:
         self._read_varnames()
         
         # Initialize concentrations
-        self.CONC = np.zeros((self.nz, self.nbvar), order="F")
+        self.CONC = np.zeros((self.ne, self.nz, self.nbvar), order="F")
 
     def step(self, conc, temp, sal, irrad, time_s):
         """Convenience: push everything, run one step, return TEND."""
@@ -113,18 +112,15 @@ class Eco3MCoupler:
         under COUPL, Eco3M does not apply albedo, assuming the physical
         model already did. The namelist 'albedo' entry is inactive.
         """
-        t = _f64(temp, self.nz, "temp")
-        s = _f64(sal, self.nz, "sal")
-        self.lib.eco3m_c_set_physics(_ptr(t), _ptr(s),
-                                     float(irrad), float(time_s))
+        t = self._as_profile(temp, "temp")
+        s = self._as_profile(sal, "sal")
+        self.lib.eco3m_c_set_physics(_ptr(t), _ptr(s), float(irrad), float(time_s))
 
     # ------------------------------------------------------------------
     # Getters
     # ------------------------------------------------------------------
     def get_eparz(self):
-        """PAR profile, length nz. Cheapest check on dz sign and grid
-        orientation: it must decay monotonically away from the surface."""
-        out = np.zeros(self.nz, dtype=np.float64)
+        out = np.zeros((self.ne, self.nz), dtype=np.float64, order="F")
         self.lib.eco3m_c_get_eparz(_ptr(out))
         return out
 
@@ -142,7 +138,7 @@ class Eco3MCoupler:
         return out
     
     def get_tend(self):
-        out = np.zeros((self.nz, self.nbvar), dtype=np.float64, order="F")
+        out = np.zeros((self.ne, self.nz, self.nbvar), dtype=np.float64, order="F")
         self.lib.eco3m_c_get_tend(_ptr(out))
         return out
 
@@ -231,10 +227,15 @@ class Eco3MCoupler:
         return self.varnames
     
     def _as_state(self, arr, name):
-        """Coerce to an (nz, nbvar) float64 array in Fortran order."""
         a = np.asarray(arr, dtype=np.float64)
-        if a.shape != (self.nz, self.nbvar):
-            raise ValueError(
-                f"{name}: expected shape ({self.nz}, {self.nbvar}), got {a.shape}"
-            )
+        if a.shape != (self.ne, self.nz, self.nbvar):
+            raise ValueError(f"{name}: expected ({self.ne}, {self.nz}, "
+                            f"{self.nbvar}), got {a.shape}")
+        return np.asfortranarray(a)
+
+    def _as_profile(self, arr, name):
+        """(ne, nz) float64, Fortran order."""
+        a = np.asarray(arr, dtype=np.float64)
+        if a.shape != (self.ne, self.nz):
+            raise ValueError(f"{name}: expected ({self.ne}, {self.nz}), got {a.shape}")
         return np.asfortranarray(a)

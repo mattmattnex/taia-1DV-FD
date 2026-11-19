@@ -1,0 +1,46 @@
+The programs in this directory (and backed up in TOOLS) allow you to either:
+
+1 /create new initial conditions, 
+2/ check that the available initial conditions are compatible with the minimum and maximum quotas and ratios of your parameter file, and automatically modify the initial values of intracellular concentrations (biomass of organisms calculated from cell abundances) only when this is not the case
+3/ regenerate the initial biomass conditions of organisms so that they are compatible with new quotas/ratios.
+
+-----------------------------------------------------------------------------------------------
+1/  you wish to modify all or part of the initial concentrations
+-----------------------------------------------------------------------------------------------
+In this case, you must:
+1.a/ indicate the simulation number in the create_cini_1DV.sh file
+1.b/ run the create_cini_1DV.sh program with the command ./create_cini_1DV.sh
+1.c/ manually edit the values in the new initial conditions directory located in the BIBLIOTHEQUE_CINI directory 
+
+----------------------------------------------------------------------------------------------------
+2/ you only want to check if  the initial intracellular contents of the organisms are consistent  
+with the minimum and maximum quotas and ratios of your parameter file
+----------------------------------------------------------------------------------------------------
+Using the existing initial conditions available in the BIBLIOTHEQUE_C_INI_DYFAMED/C_INI_DYFAMED_ECO3M_MED_EMCCC_REF directory, it is
+possible to regenerate other initial conditions that will modify the initial intracellular contents 
+to make them consistent with the quotas and ratios in the new parameter file.
+
+In this case, you must:
+2.a/ copy the new parameter file in the current directory
+2.b/ indicate the name of this parameter file and the simulation number in the create_cini_quota_1DV.sh file
+2.c/ in the make_cini.f90 the bolean variable FORCE mut be put to .FALSE.
+2.d/ run the create_cini_quota_1DV.sh program with the command ./create_cini_quota_1DV.sh
+
+----------------------------------------------------------------------------------------------------
+3/ you only want to modify the initial intracellular contents of the organisms because 
+the minimum and maximum quotas and ratios have been modified in the parameter file
+----------------------------------------------------------------------------------------------------
+Using the existing initial conditions available in the BIBLIOTHEQUE_C_INI_DYFAMED/C_INI_DYFAMED_ECO3M_MED_EMCCC_REF directory, it is
+possible to regenerate other initial conditions that will modify the initial intracellular contents 
+to make them consistent with the quotas and ratios in the new parameter file.
+
+In this case, you must:
+2.a/ copy the new parameter file in the current directory
+2.b/ indicate the name of this parameter file and the simulation number in the create_cini_quota_1DV.sh file
+2.c/ run the create_cini_quota_1DV.sh program with the command ./create_cini_quota_1DV.sh
+
+
+
+
+
+

@@ -25,7 +25,8 @@
 #------------------------UPTAKE DE NUTRIMENTS---------------------
 #-----------------------------------------------------------------
 #FONCTION DE MONOD:
-f_upt:f_upt_monod_bidon:4:ibio:inut:kdemi:Vmax
+f_upt:f_upt_monod_cell_multX:4:ibio:inut:kdemi:Vmax
+f_inhib:f_inhib_Frost_Franzen:2:inut:kdemi
 #-----------------------------------------------------------------
 #----------------INHIBITION UPTAKE PAR UN NUTRIMENT---------------
 #-----------------------------------------------------------------
@@ -33,7 +34,70 @@ f_upt:f_upt_monod_bidon:4:ibio:inut:kdemi:Vmax
 #------------------------MORTALITE NATURELLE----------------------
 #-----------------------------------------------------------------
 #FONCTION DE MORTALITE:
-f_mort_l:f_mort_linear_bidon:1:kmort
+f_mort_l:f_mort_linear_cell_2026:1:kmort
+f_mort_q:f_mort_quadratique_cell_2026:3:indX:indCell:kmort1
+#-----------------------------------------------------------------
+#--------------LIMITATION PAR UN QUOTA INTRACELLULAIRE------------
+#-----------------------------------------------------------------
+#FONCTION DE QUOTA:
+f_hQPPX:f_hQPPX_geid_2026:5:indX:QminX:QmaxX:minCX_ratio:maxCX_ratio
+f_fQPPX:f_fQPPX_geid_2026:5:indX:Qmin:Qmax:minCX_ratio:maxCX_ratio
+f_hQPPC:f_hQPPC_geid_2026:7:indX:Qmin:Qmax:P_min_ratio:P_max_ratio:N_min_ratio:N_max_ratio
+f_fQPPC:f_fQPPC_geid_2026:7:indX:Qmin:Qmax:P_min_ratio:P_max_ratio:N_min_ratio:N_max_ratio
+f_fQPPC_rem:f_fQPPC_geid_rem_2025_clean:3:indX:QminC:QmaxC
+f_hQPPC_rem:f_hQPPC_geid_rem_2025_clean:3:indX:QminC:QmaxC
+#-----------------------------------------------------------------
+#--------------------------PHOTOSYNTHESE--------------------------
+#-----------------------------------------------------------------
+#FONCTION DE HAN:
+f_photo:f_ppb_han_2025_clean:6:astarphimC:tau:sig_ps2:k_d:k_r:iphyC
+#-----------------------------------------------------------------
+#---------------------------CROISSANCE----------------------------
+#-----------------------------------------------------------------
+#FONCTION DE CROISSANCE:
+f_growth:f_growth_cell_droop_2024:11:mumax:indcell:indC:QCmin:QCmax:indN:QNmin:QNmax:indP:QPmin:QPmax
+f_growth_X:f_growth_cell_droop_convX_2026:2:indcell:indX
+f_growth_DET:f_growth_MOP2MZOO_2025_clean:5:indcell:indX:QXmin:QXmax:indDETC
+f_growth_DETX:f_growth_MOPX2MZOO_2025_clean:5:indcell:indX:QXmin:QXmax:indDETX
+#-----------------------------------------------------------------
+#---------------LIMITATION PAR DES QUOTA INTRACELLULAIRES---------
+#-----------------------------------------------------------------
+#FONCTION DE DROOP:
+#-----------------------------------------------------------------
+#---------------------------RESPIRATION---------------------------
+#-----------------------------------------------------------------
+#FONCTION DE THINGSTAD (COUT DE LA CROISSANCE):
+#f_resp:f_resp_phy_new:9:costm:QminC:QmaxC:costg:mumax:QminN:QmaxN:QminP:QmaxP
+# respiration de maintenance:
+#f_respm:f_resp_maint:3:costm:QminC:QmaxC
+#-----------------------------------------------------------------
+#--------------------PRODUCTION DE CHLOROPHYLLE-------------------
+#-----------------------------------------------------------------
+#FONCTION DE BAKLOUTI
+f_rchl:f_regul_Chl_bak2026:6:alpha_star:CHL_C_MAX:Q_MIN_PHY_C:Q_MAX_PHY_C:CN_min:CN_max
+f_upt_chl:f_synth_Chl:4:ibio:inut:kdemi:Vmax
+#-----------------------------------------------------------------
+#-------------------------NITRIFICATION---------------------------
+#-----------------------------------------------------------------
+f_nitrif:f_nitrif_linear_2026:2:iNH4:tx
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+#--------------------------DIAZOTROPHIE---------------------------
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+#------------------------REMINERALISATION DE LA MOD---------------
+#-----------------------------------------------------------------
+f_hydrol:f_hydrol_C_2026:9:indX:TTX:indBac:QminC:QmaxC:QminN:QmaxN:QminP:QmaxP
+f_ratio_OM:f_ratio_OM:2:iOMX:iOMC
+#-----------------------------------------------------------------
+#-------------------------PREDATION DU ZOOPLANCTON----------------
+f_graz_X:f_graz_hol2_mpreys_X_2025:2:ipred:iprey
+f_graz_cil:f_graz_KTW_revis:20:ipred:iprey:iXprey:nbprey:betaKTW:ind1:indC1:Imax1:Fmax1:phi1:ind2:indC2:Imax2:Fmax2:phi2:ind3:indC3:Imax3:Fmax3:phi3
+f_graz_hnf:f_graz_KTW_revis:15:ipred:iprey:iXprey:nbprey:betaKTW:ind1:indC1:Imax1:Fmax1:phi1:ind2:indC2:Imax2:Fmax2:phi2
+f_graz_mz:f_graz_KTW_revis:20:ipred:iprey:iXprey:nbprey:betaKTW:ind1:indC1:Imax1:Fmax1:phi1:ind2:indC2:Imax2:Fmax2:phi2:ind3:indC3:Imax3:Fmax3:phi3
+#-----------------------------------------------------------------
+#--------------------------fonctions des copepodes----------------
+#-----------------------------------------------------------------
 #
 #-----------------------------------------------------------------
 #--------------------------fonction d''extinction-----------------

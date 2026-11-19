@@ -1,0 +1,222 @@
+# Default configuration for the Eco3M modelling platform 
+# Last modification: Juil 2019
+#
+#------------------------------------------------------------------------
+#         MODEL Plankton Functional Types and other compartments
+#------------------------------------------------------------------------
+#  - bacteria  (in C,N)
+#  - small phytoplankton (expressed in C, Chl, N), 
+#  - large  phytoplankton  (expressed in C, Chl, N)
+#  - one zooplankton (in C,N)
+#  - two nutrients (NO3,NH4), 
+#  - Dissolved Organic Matter DOM (in C,N), 
+#  - Detrital matter DET (C,N)
+#-------------------------------------------------------------------------
+# ** IMPORTANT INSTRUCTIONS  **
+# --------------------------------
+# 1/ Always begin an empty line or a comment line by a "#"  on the first column 
+# 2/ Don't write anything after the required information on a given line
+# 3/ On a given line, variables must be separated by a ":" without any space left
+# 4/ Compartments name must be the following unless additional compartments are created :
+#    zoo / phy / bac / det / mod / mid / mip
+#    (zoo = zooplantkon; phy = phytoplankton; bac = bacteria; det = detritus; mod = dissolved organic matter
+#    mid = dissolved inorganic matter; mip = particulate inorganic matter)
+# 5/ If additional compartments are created, their name must not include space or special character
+#    and must not exceed 10 characters
+# 6/ All the variables name must be in lower case, except chemical elements such
+#    as: C,N,P,Si,Fe,Chl,NO3,NH4,O2,Zn...
+# 7/ if the number of characters in a line of the flux matrix exceeds the L_CHAIN value, the latter must be
+#    increased in the src_eco3m/eco3m_string.F90 file
+#
+#### NAME OF THE CONFIGURATION OF THE BIOGECHEMICAL MODEL HANDLED BY ECO3M
+# The configuration name will be: Eco3M_config. Just the config part is required here:
+Eco3M_MED_CN
+######## COMPARTMENTS / SUB-COMPARTMENTS / STATE VARIABLES OF THE BIOGEOCHEMICAL MODEL
+# --------------------------------
+# nb of compartments:nb of sub-compartments:nb of state variables
+6:7:15
+#Compartiments Zooplanctonique
+zoo:1
+COP:cell:C:N
+#Compartiments Phytoplanctoniques
+phy:1		
+PHY:cell:C:N:Chl
+#Compartiments des Bacteries Heterotrophes
+bac:1
+BAC:cell:C:N
+#Compartment for detrital organic matter
+mop:1
+MOP:C:N
+#Compartment for dissolved organic matter
+mod:2
+MODLC:C
+MODLN:N
+#Compartment for nutrients
+mid:1
+DIN:N
+# 
+################################################################################
+# FLOW MATRIX:
+# This matrix contains all the fluxes between state variables
+# 
+#-----------------------------------------------------------------
+# important instructions:
+# ---------------------
+# 1/ since this matrix is symmetric, only the upper half must be filled 
+#     by non-null fluxes between variables var(ili) and var(jcol)
+#     NOTE THAT ili MUST ALWAYS BE < jcol
+# 2/ a given flux between var(ili) and var (jcol) must be introduced as follows:
+#    ili;jcol:signe;proc(list of parameters separed by  ">")
+# 4/ if a given flux includes several processes or functions, they must be separated by  ":"
+# 5/ only the non-empty elements of the flux matrix must be reported
+# 6/ fluxes betweeen a model state variable and a variable not reprsented in the model 
+#    (e.g. photosynthesis if CO2 is not explicitly represented) must be introduced on the diagonal 
+#    of the flux matrix
+# 7/ The flux matrix must end by the line "finflux"
+#-----------------------------------------------------------------
+#
+# Total number of functions involved in the different element of the flow matrix:
+76
+# Beginning of the flow matrix:
+#################################################################################
+#CROISSANCES DES ORGANISMES EN CELLULES
+#################################################################################
+#--------------------------------------------------------------------------------
+#croissance du mesoZoo
+#--------------------------------------------------------------------------------
+MZOO_cell:+;f_growth(GROWTH_MZOO>MZOO_cell>MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C):-;f_mort_l(MORTL_MZOO):-;f_mort_q(MZOO_cell>MZOO_cell>MORTQ_MZOO)
+#--------------------------------------------------------------------------------
+#croissance du phytoplancton 
+#--------------------------------------------------------------------------------
+PHY_cell:+;f_growth(GROWTH_PHY>PHY_cell>PHY_C>Q_MIN_PHY_C>Q_MAX_PHY_C>PHY_N>Q_MIN_PHY_N>Q_MAX_PHY_N):-;f_mort_l(MORTL_PHY):-;f_graz_mz(MZOO_cell>N2_PREY_CELL_MZOO>N_PREY_MZOO>betaKTW>N1_PREY_CELL_MZOO>I1_PREY_MZOO>F1_PREY_MZOO>PHI1_PREY_MZOO>N2_PREY_CELL_MZOO>I2_PREY_MZOO>F2_PREY_MZOO>PHI2_PREY_MZOO):-;f_mort_q(PHY_cell>PHY_cell>MORTQ_PHY)
+#--------------------------------------------------------------------------------
+#croissance des bacteries heterotrophes  +  repartition de la predation implicite des copepodes dans leurs stades juveniles
+#--------------------------------------------------------------------------------
+BAC_cell:+;f_growth(GROWTH_BAC>BAC_cell>BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C>BAC_N>Q_MIN_BAC_N>Q_MAX_BAC_N):-;f_graz_mz(MZOO_cell>N1_PREY_CELL_MZOO>N_PREY_MZOO>betaKTW>N1_PREY_CELL_MZOO>I1_PREY_MZOO>F1_PREY_MZOO>PHI1_PREY_MZOO>N2_PREY_CELL_MZOO>I2_PREY_MZOO>F2_PREY_MZOO>PHI2_PREY_MZOO):-;f_mort_l(MORTL_BAC):-;f_mort_q(BAC_cell>BAC_cell>MORTQ_BAC)
+#---------------------------------------------------------------------------------
+#---------------------------------------------------------------
+#--------------- ZOOPLANCTON Z ---------------
+#---------------------------------------------------------------
+#--------------------------------------------------------------------------------
+#Grazing du zoo sur le phyto  et les bac
+#--------------------------------------------------------------------------------
+MZOO_C;PHY_C:-;f_graz_X(MZOO_C>PHY_C)
+MZOO_N;PHY_N:-;f_graz_X(MZOO_N>PHY_N)
+#
+MZOO_C;BAC_C:-;f_graz_X(MZOO_C>BAC_C)
+MZOO_N;BAC_N:-;f_graz_X(MZOO_N>BAC_N)
+#---------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+##################################################################################
+# UPTAKE DE NUTRIMENTS PAR LES OSMOTROPHES
+##################################################################################
+#---------------------------------------------------------------------------------
+#Uptake des Diatomees
+#---------------------------------------------------------------------------------
+# Uptake de NO3
+PHY_N;NIT:-;f_upt(PHY_N>NIT>K_PHY_NIT>V_PHY_NIT):x;f_fQPPX(PHY_N>Q_MIN_PHY_N>Q_MAX_PHY_N>Q_MIN_PHY_CN>Q_MAX_PHY_CN)
+#---------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------
+#Uptake by free bacteria 
+#----------------------------------------------------------------------------------
+# Uptake of NO3
+BAC_N;NIT:-;f_upt(BAC_N>NIT>K_BAC_NIT>V_BAC_NIT>MODL_N>K_BAC_LDON>NIT>K_BAC_NIT):x;f_fQPPX(BAC_N>Q_MIN_BAC_N>Q_MAX_BAC_N>Q_MIN_BAC_CN>Q_MAX_BAC_CN)
+#
+##################################################################################
+# UPTAKE AND TRANSFORMATION OF DOM BY HETEROTROPHIC BACTERIA
+##################################################################################
+#---------------------------------------------------------------------------------
+#UPTAKE BY HETEROTROPHIC BACTERIA
+#---------------------------------------------------------------------------------
+# Uptake et production (lyse) de DOC hydrolysable
+BAC_C;MODL_C:-;f_upt(BAC_C>MODL_C>K_BAC_LDOC>V_BAC_LDOC):x;f_fQPPC(BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C>Q_MIN_BAC_CN>Q_MAX_BAC_CN):+1.0;f_mort_l(MORTL_BAC):+1.0;f_mort_q(BAC_C>BAC_cell>MORTQ_BAC)
+#
+# Uptake et production (lyse) DON hydrolysable
+BAC_N;MODL_N:-;f_upt(BAC_N>MODL_N>K_BAC_LDON>V_BAC_LDON):+;f_upt(BAC_N>MODL_N>K_BAC_LDON>V_BAC_LDON):x;f_hQPPX(BAC_N>Q_MIN_BAC_N>Q_MAX_BAC_N>Q_MIN_BAC_CN>Q_MAX_BAC_CN):x;f_hQPPC_rem(BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C):+1.0;f_mort_l(MORTL_BAC):+1.0;f_mort_q(BAC_N>BAC_cell>MORTQ_BAC)
+##----------------------------------------------------------------------------------
+# Uptake by diatoms
+#----------------------------------------------------------------------------------
+# Production de DOC labile (exudation et lyse)
+PHY_C;MODL_C:+;f_photo(ASTAR_CHL_PHY>TAU_PHY>SIG_PS2_PHY>K_D_PHY>K_R_PHY):x;f_hQPPC(PHY_C>Q_MIN_PHY_C>Q_MAX_PHY_C>Q_MIN_PHY_CN>Q_MAX_PHY_CN)
+#----------------------------------------------------------------------------------
+###################################################################################
+#PRODUCTION DE MATIERE ORGANIQUE DISSOUTE ET REMINERALISATION
+##################################################################################
+#---------------------------------------------------------------------------------
+#Production par le MZOO
+#---------------------------------------------------------------------------------
+# Production de DOC semilabile (excretion)
+MZOO_C;MODL_C:+P_EXCRE_MZOO;f_graz_X(MZOO_C>BAC_C):x;f_hQPPC(MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C):+P_EXCRE_MZOO;f_graz_X(MZOO_C>PHY_C):x;f_hQPPC(MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C)
+# Production de AMMO (excretion )
+MZOO_N;NIT:+P_EXCRE_MZOO;f_graz_X(MZOO_N>BAC_N):x;f_hQPPX(MZOO_N>Q_MIN_MZOO_N>Q_MAX_MZOO_N>Q_MIN_MZOO_CN>Q_MAX_MZOO_CN):+P_EXCRE_MZOO;f_graz_X(MZOO_N>PHY_N):x;f_hQPPX(MZOO_N>Q_MIN_MZOO_N>Q_MAX_MZOO_N>Q_MIN_MZOO_CN>Q_MAX_MZOO_CN)
+#---------------------------------------------------------------------------------
+##################################################################################
+#PRODUCTION DE MATIERE ORGANIQUE PARTICULAIRE
+##################################################################################
+#---------------------------------------------------------------------------------
+#Production du mesoZOO (mortalite + egestion de pelotes fecales) + repartition de la predation implicite des copepodes dans leurs stades juveniles
+#---------------------------------------------------------------------------------
+MZOO_C;MOP_C:+;f_mort_q(MZOO_C>MZOO_cell>MORTQ_MZOO):+1.0;f_mort_l(MORTL_MZOO):-1.0;f_growth_DET(MZOO_cell>MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C>MOP_C):+P_PELOT_MZOO;f_graz_X(MZOO_C>BAC_C):x;f_hQPPC(MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C):+P_PELOT_MZOO;f_graz_X(MZOO_C>PHY_C):x;f_hQPPC(MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C)
+#
+MZOO_N;MOP_N:+;f_mort_q(MZOO_N>MZOO_cell>MORTQ_MZOO):+1.0;f_mort_l(MORTL_MZOO):-1.0;f_growth_DETX(MZOO_cell>MZOO_C>Q_MIN_MZOO_C>Q_MAX_MZOO_C>MOP_N):+P_PELOT_MZOO;f_graz_X(MZOO_N>BAC_N):x;f_hQPPX(MZOO_N>Q_MIN_MZOO_N>Q_MAX_MZOO_N>Q_MIN_MZOO_CN>Q_MAX_MZOO_CN):+P_PELOT_MZOO;f_graz_X(MZOO_N>PHY_N):x;f_hQPPX(MZOO_N>Q_MIN_MZOO_N>Q_MAX_MZOO_N>Q_MIN_MZOO_CN>Q_MAX_MZOO_CN)
+#---------------------------------------------------------------------------------
+#Production des Diatomes
+#---------------------------------------------------------------------------------
+PHY_C;MOP_C:+1.0;f_mort_l(MORTL_PHY):+;f_mort_q(PHY_C>PHY_cell>MORTQ_PHY)
+PHY_N;MOP_N:+1.0;f_mort_l(MORTL_PHY):+;f_mort_q(PHY_N>PHY_cell>MORTQ_PHY)
+#
+#---------------------------------------------------------------------------------
+###################################################################################
+##REMINERALISATION DE LA MATIERE ORGANIQUE 
+###################################################################################
+##
+MODL_N;NIT:+;f_upt(BAC_N>MODL_N>K_BAC_LDON>V_BAC_LDON):x;f_fQPPC_rem(BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C):x;f_hQPPX(BAC_N>Q_MIN_BAC_N>Q_MAX_BAC_N>Q_MIN_BAC_CN>Q_MAX_BAC_CN)
+#---------------------------------------------------------------------------------
+#REMINERALISATION DE LA MOP
+#--------------------------------------------------------------------------------- 
+MOP_C;MODL_C:+;f_hydrol(MOP_C>TT_MOP_C>BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C>Q_MIN_BAC_N>Q_MAX_BAC_N)
+MOP_N;MODL_N:+;f_hydrol(MOP_N>TT_MOP_C>BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C>Q_MIN_BAC_N>Q_MAX_BAC_N)
+#
+###################################################################################
+#RESPIRATION HETEROTROPHES
+##################################################################################
+#----------------------------------------------------------------------------------
+#respiration du mesoZOO
+#----------------------------------------------------------------------------------
+MZOO_C:-COSTG_MZOO;f_growth_X(MZOO_cell>MZOO_C)
+#----------------------------------------------------------------------------------
+#respiration des bacteries heterotrophes
+#----------------------------------------------------------------------------------
+BAC_C:-COST_uLDOC;f_upt(BAC_C>MODL_C>K_BAC_LDOC>V_BAC_LDOC):x;f_fQPPC(BAC_C>Q_MIN_BAC_C>Q_MAX_BAC_C>Q_MIN_BAC_CN>Q_MAX_BAC_CN):-COST_uNIT;f_upt(BAC_N>NIT>K_BAC_NIT>V_BAC_NIT):x;f_fQPPX(BAC_N>Q_MIN_BAC_N>Q_MAX_BAC_N>Q_MIN_BAC_CN>Q_MAX_BAC_CN)
+##################################################################################
+#RESPIRATION/PHOTOSYNTHESE DES ORGANISMES PHOTOSYNTHETIQUES
+###################################################################################
+#----------------------------------------------------------------------------------
+#respiration/photosynthese des diatomes
+#----------------------------------------------------------------------------------
+PHY_C:+;f_photo(ASTAR_CHL_PHY>TAU_PHY>SIG_PS2_PHY>K_D_PHY>K_R_PHY):-COSTG_PHY;f_photo(ASTAR_CHL_PHY>TAU_PHY>SIG_PS2_PHY>K_D_PHY>K_R_PHY):-COST_uNIT;f_upt(PHY_N>NIT>K_PHY_NIT>V_PHY_NIT):x;f_fQPPX(PHY_N>Q_MIN_PHY_N>Q_MAX_PHY_N>Q_MIN_PHY_CN>Q_MAX_PHY_CN)
+#----------------------------------------------------------------------------------
+#respiration/photosynthese des picophytoplancton
+#----------------------------------------------------------------------------------
+#PHYS_C:+;f_photo(ASTAR_CHL_PHYS>TAU_PHYS>SIG_PS2_PHYS>K_D_PHYS>K_R_PHYS):-COSTG_PHYS;f_photo(ASTAR_CHL_PHYS>TAU_PHYS>SIG_PS2_PHYS>K_D_PHYS>K_R_PHYS):-COST_uNIT;f_upt(PHYS_N>NIT>K_PHYS_NIT>V_PHYS_NIT>AMMO>K_PHYS_AMMO>NIT>K_PHYS_NIT):x;f_fQPPX(PHYS_N>Q_MIN_PHYS_N>Q_MAX_PHYS_N>Q_MIN_PHYS_CN>Q_MAX_PHYS_CN):-COST_uAMMO;f_upt(PHYS_N>AMMO>K_PHYS_AMMO>V_PHYS_AMMO):x;f_fQPPX(PHYS_N>Q_MIN_PHYS_N>Q_MAX_PHYS_N>Q_MIN_PHYS_CN>Q_MAX_PHYS_CN):-COST_uPHOS;f_upt(PHYS_P>PHOS>K_PHYS_PHOS>V_PHYS_PHOS):x;f_fQPPX(PHYS_P>Q_MIN_PHYS_P>Q_MAX_PHYS_P>Q_MIN_PHYS_CP>Q_MAX_PHYS_CP)
+#----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------
+###################################################################################
+#PRODUCTION DE CHLOROPHYLE PAR LES ORGANISMES PHOTOSYNTHETIQUES
+###################################################################################
+#----------------------------------------------------------------------------------
+#Production de chlorophylle par les diatomes
+#----------------------------------------------------------------------------------
+PHY_Chl:+;f_rchl(ASTAR_CHL_PHY>CHL_C_MAX_PHY>Q_MIN_PHY_C>Q_MAX_PHY_C>Q_MIN_PHY_CN>Q_MAX_PHY_CN):x;f_upt(PHY_N>NIT>K_PHY_NIT>V_PHY_NIT):-;f_mort_l(MORTL_PHY):-;f_mort_q(PHY_Chl>PHY_cell>MORTQ_PHY):-;f_graz_X(MZOO_cell>PHY_Chl)
+#
+#
+finflux
+#################################################################################
+# Rapport  Chlorophylle/Carbone  en (g chl)/(mol C) 
+#(0 = rapport constant et donne apres les ':'
+# et 1 = rapport variable calcule par le prog. mais a initialiser) :
+1:
+#################################################################################
+#  function for light extinction (not used by the RGB extonction model !!!! VERIF !!!!!) 
+f_extinc(0.0384>0.029)
+##################################################################################

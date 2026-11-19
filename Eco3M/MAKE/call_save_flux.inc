@@ -2,30 +2,950 @@
  ! It contains the details of the functions involved in the fluxes between
  ! biological variables
 
- ! maximum number of functions per biogeochemical flux =           2
+ ! maximum number of functions per biogeochemical flux =           7
 
 
- nbproc_loc = size(FLUX_VAL(1,2)%idproc)
+ nbproc_loc = size(FLUX_VAL(1,1)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_growth_cell_droop_2024(1,1, &
+      FLUX_PAR(1)%valpar(           1 ), & 
+      FLUX_PAR(1)%valpar(           2 ), & 
+      FLUX_PAR(1)%valpar(           3 ), & 
+      FLUX_PAR(1)%valpar(           4 ), & 
+      FLUX_PAR(1)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(- 1) *&
+ f_mort_linear_cell_2026(1,1, &
+      FLUX_PAR(2)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(- 1) *&
+ f_mort_quadratique_cell_2026(1,1, &
+      FLUX_PAR(3)%valpar(           1 ), & 
+      FLUX_PAR(3)%valpar(           2 ), & 
+      FLUX_PAR(3)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  1,  1)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   1,    1,    3)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(4,4)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_growth_cell_droop_2024(4,4, &
+      FLUX_PAR(4)%valpar(           1 ), & 
+      FLUX_PAR(4)%valpar(           2 ), & 
+      FLUX_PAR(4)%valpar(           3 ), & 
+      FLUX_PAR(4)%valpar(           4 ), & 
+      FLUX_PAR(4)%valpar(           5 ), & 
+      FLUX_PAR(4)%valpar(           6 ), & 
+      FLUX_PAR(4)%valpar(           7 ), & 
+      FLUX_PAR(4)%valpar(           8 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(- 1) *&
+ f_mort_linear_cell_2026(4,4, &
+      FLUX_PAR(5)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(- 1) *&
+ f_graz_KTW_revis(4,4, &
+      FLUX_PAR(6)%valpar(           1 ), & 
+      FLUX_PAR(6)%valpar(           2 ), & 
+      FLUX_PAR(6)%valpar(           3 ), & 
+      FLUX_PAR(6)%valpar(           4 ), & 
+      FLUX_PAR(6)%valpar(           5 ), & 
+      FLUX_PAR(6)%valpar(           6 ), & 
+      FLUX_PAR(6)%valpar(           7 ), & 
+      FLUX_PAR(6)%valpar(           8 ), & 
+      FLUX_PAR(6)%valpar(           9 ), & 
+      FLUX_PAR(6)%valpar(          10 ), & 
+      FLUX_PAR(6)%valpar(          11 ), & 
+      FLUX_PAR(6)%valpar(          12 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+(- 1) *&
+ f_mort_quadratique_cell_2026(4,4, &
+      FLUX_PAR(7)%valpar(           1 ), & 
+      FLUX_PAR(7)%valpar(           2 ), & 
+      FLUX_PAR(7)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  4,  4)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   4,    4,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(8,8)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_growth_cell_droop_2024(8,8, &
+      FLUX_PAR(8)%valpar(           1 ), & 
+      FLUX_PAR(8)%valpar(           2 ), & 
+      FLUX_PAR(8)%valpar(           3 ), & 
+      FLUX_PAR(8)%valpar(           4 ), & 
+      FLUX_PAR(8)%valpar(           5 ), & 
+      FLUX_PAR(8)%valpar(           6 ), & 
+      FLUX_PAR(8)%valpar(           7 ), & 
+      FLUX_PAR(8)%valpar(           8 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(- 1) *&
+ f_graz_KTW_revis(8,8, &
+      FLUX_PAR(9)%valpar(           1 ), & 
+      FLUX_PAR(9)%valpar(           2 ), & 
+      FLUX_PAR(9)%valpar(           3 ), & 
+      FLUX_PAR(9)%valpar(           4 ), & 
+      FLUX_PAR(9)%valpar(           5 ), & 
+      FLUX_PAR(9)%valpar(           6 ), & 
+      FLUX_PAR(9)%valpar(           7 ), & 
+      FLUX_PAR(9)%valpar(           8 ), & 
+      FLUX_PAR(9)%valpar(           9 ), & 
+      FLUX_PAR(9)%valpar(          10 ), & 
+      FLUX_PAR(9)%valpar(          11 ), & 
+      FLUX_PAR(9)%valpar(          12 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(- 1) *&
+ f_mort_linear_cell_2026(8,8, &
+      FLUX_PAR(10)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+(- 1) *&
+ f_mort_quadratique_cell_2026(8,8, &
+      FLUX_PAR(11)%valpar(           1 ), & 
+      FLUX_PAR(11)%valpar(           2 ), & 
+      FLUX_PAR(11)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  8,  8)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   8,    8,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(2,5)%idproc)
  Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
   
  ss_flux(           1 ,:,:,:) =  &
 (- 1) *&
- f_upt_monod_bidon(1,2, &
-      FLUX_PAR(1)%valpar(           1 ), & 
-      FLUX_PAR(1)%valpar(           2 ), & 
-      FLUX_PAR(1)%valpar(           3 ), & 
-      FLUX_PAR(1)%valpar(           4 ) )
+ f_graz_hol2_mpreys_X_2025(2,5, &
+      FLUX_PAR(12)%valpar(           1 ), & 
+      FLUX_PAR(12)%valpar(           2 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  2,  5)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   2,    5,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(3,6)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_graz_hol2_mpreys_X_2025(3,6, &
+      FLUX_PAR(13)%valpar(           1 ), & 
+      FLUX_PAR(13)%valpar(           2 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  3,  6)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   3,    6,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(2,9)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_graz_hol2_mpreys_X_2025(2,9, &
+      FLUX_PAR(14)%valpar(           1 ), & 
+      FLUX_PAR(14)%valpar(           2 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  2,  9)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   2,    9,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(3,10)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_graz_hol2_mpreys_X_2025(3,10, &
+      FLUX_PAR(15)%valpar(           1 ), & 
+      FLUX_PAR(15)%valpar(           2 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  3, 10)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   3,   10,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(6,15)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_upt_monod_cell_multX(6,15, &
+      FLUX_PAR(16)%valpar(           1 ), & 
+      FLUX_PAR(16)%valpar(           2 ), & 
+      FLUX_PAR(16)%valpar(           3 ), & 
+      FLUX_PAR(16)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_fQPPX_geid_2026(6,15, &
+      FLUX_PAR(17)%valpar(           1 ), & 
+      FLUX_PAR(17)%valpar(           2 ), & 
+      FLUX_PAR(17)%valpar(           3 ), & 
+      FLUX_PAR(17)%valpar(           4 ), & 
+      FLUX_PAR(17)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  6, 15)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   6,   15,    2)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(10,15)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_upt_monod_cell_multX(10,15, &
+      FLUX_PAR(18)%valpar(           1 ), & 
+      FLUX_PAR(18)%valpar(           2 ), & 
+      FLUX_PAR(18)%valpar(           3 ), & 
+      FLUX_PAR(18)%valpar(           4 ), & 
+      FLUX_PAR(18)%valpar(           5 ), & 
+      FLUX_PAR(18)%valpar(           6 ), & 
+      FLUX_PAR(18)%valpar(           7 ), & 
+      FLUX_PAR(18)%valpar(           8 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_fQPPX_geid_2026(10,15, &
+      FLUX_PAR(19)%valpar(           1 ), & 
+      FLUX_PAR(19)%valpar(           2 ), & 
+      FLUX_PAR(19)%valpar(           3 ), & 
+      FLUX_PAR(19)%valpar(           4 ), & 
+      FLUX_PAR(19)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL( 10, 15)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,  10,   15,    2)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(9,13)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_upt_monod_cell_multX(9,13, &
+      FLUX_PAR(20)%valpar(           1 ), & 
+      FLUX_PAR(20)%valpar(           2 ), & 
+      FLUX_PAR(20)%valpar(           3 ), & 
+      FLUX_PAR(20)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_fQPPC_geid_2026(9,13, &
+      FLUX_PAR(21)%valpar(           1 ), & 
+      FLUX_PAR(21)%valpar(           2 ), & 
+      FLUX_PAR(21)%valpar(           3 ), & 
+      FLUX_PAR(21)%valpar(           4 ), & 
+      FLUX_PAR(21)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_linear_cell_2026(9,13, &
+      FLUX_PAR(22)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_quadratique_cell_2026(9,13, &
+      FLUX_PAR(23)%valpar(           1 ), & 
+      FLUX_PAR(23)%valpar(           2 ), & 
+      FLUX_PAR(23)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  9, 13)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   9,   13,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(10,14)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(- 1) *&
+ f_upt_monod_cell_multX(10,14, &
+      FLUX_PAR(24)%valpar(           1 ), & 
+      FLUX_PAR(24)%valpar(           2 ), & 
+      FLUX_PAR(24)%valpar(           3 ), & 
+      FLUX_PAR(24)%valpar(           4 ) )
 
  
   
  ss_flux(           2 ,:,:,:) =  &
 (+ 1) *&
- f_mort_linear_bidon(1,2, &
-      FLUX_PAR(2)%valpar(           1 ) )
+ f_upt_monod_cell_multX(10,14, &
+      FLUX_PAR(25)%valpar(           1 ), & 
+      FLUX_PAR(25)%valpar(           2 ), & 
+      FLUX_PAR(25)%valpar(           3 ), & 
+      FLUX_PAR(25)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+ f_hQPPX_geid_2026(10,14, &
+      FLUX_PAR(26)%valpar(           1 ), & 
+      FLUX_PAR(26)%valpar(           2 ), & 
+      FLUX_PAR(26)%valpar(           3 ), & 
+      FLUX_PAR(26)%valpar(           4 ), & 
+      FLUX_PAR(26)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+ f_hQPPC_geid_rem_2025_clean(10,14, &
+      FLUX_PAR(27)%valpar(           1 ), & 
+      FLUX_PAR(27)%valpar(           2 ), & 
+      FLUX_PAR(27)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           5 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_linear_cell_2026(10,14, &
+      FLUX_PAR(28)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           6 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_quadratique_cell_2026(10,14, &
+      FLUX_PAR(29)%valpar(           1 ), & 
+      FLUX_PAR(29)%valpar(           2 ), & 
+      FLUX_PAR(29)%valpar(           3 ) )
    
-    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  1,  2)%val
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL( 10, 14)%val
    
-call eco3m_write_fluxoutputs(ss_flux,   1,    2,    2)
+call eco3m_write_fluxoutputs(ss_flux,  10,   14,    6)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(5,13)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_ppb_han_2025_clean(5,13, &
+      FLUX_PAR(30)%valpar(           1 ), & 
+      FLUX_PAR(30)%valpar(           2 ), & 
+      FLUX_PAR(30)%valpar(           3 ), & 
+      FLUX_PAR(30)%valpar(           4 ), & 
+      FLUX_PAR(30)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_hQPPC_geid_2026(5,13, &
+      FLUX_PAR(31)%valpar(           1 ), & 
+      FLUX_PAR(31)%valpar(           2 ), & 
+      FLUX_PAR(31)%valpar(           3 ), & 
+      FLUX_PAR(31)%valpar(           4 ), & 
+      FLUX_PAR(31)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  5, 13)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   5,   13,    2)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(2,13)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+0.70      ) * &
+ f_graz_hol2_mpreys_X_2025(2,13, &
+      FLUX_PAR(32)%valpar(           1 ), & 
+      FLUX_PAR(32)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_hQPPC_geid_2026(2,13, &
+      FLUX_PAR(33)%valpar(           1 ), & 
+      FLUX_PAR(33)%valpar(           2 ), & 
+      FLUX_PAR(33)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(+0.70      ) * &
+ f_graz_hol2_mpreys_X_2025(2,13, &
+      FLUX_PAR(34)%valpar(           1 ), & 
+      FLUX_PAR(34)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+ f_hQPPC_geid_2026(2,13, &
+      FLUX_PAR(35)%valpar(           1 ), & 
+      FLUX_PAR(35)%valpar(           2 ), & 
+      FLUX_PAR(35)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  2, 13)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   2,   13,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(3,15)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+0.70      ) * &
+ f_graz_hol2_mpreys_X_2025(3,15, &
+      FLUX_PAR(36)%valpar(           1 ), & 
+      FLUX_PAR(36)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_hQPPX_geid_2026(3,15, &
+      FLUX_PAR(37)%valpar(           1 ), & 
+      FLUX_PAR(37)%valpar(           2 ), & 
+      FLUX_PAR(37)%valpar(           3 ), & 
+      FLUX_PAR(37)%valpar(           4 ), & 
+      FLUX_PAR(37)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(+0.70      ) * &
+ f_graz_hol2_mpreys_X_2025(3,15, &
+      FLUX_PAR(38)%valpar(           1 ), & 
+      FLUX_PAR(38)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+ f_hQPPX_geid_2026(3,15, &
+      FLUX_PAR(39)%valpar(           1 ), & 
+      FLUX_PAR(39)%valpar(           2 ), & 
+      FLUX_PAR(39)%valpar(           3 ), & 
+      FLUX_PAR(39)%valpar(           4 ), & 
+      FLUX_PAR(39)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  3, 15)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   3,   15,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(2,11)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_mort_quadratique_cell_2026(2,11, &
+      FLUX_PAR(40)%valpar(           1 ), & 
+      FLUX_PAR(40)%valpar(           2 ), & 
+      FLUX_PAR(40)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_linear_cell_2026(2,11, &
+      FLUX_PAR(41)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(-1.0       ) * &
+ f_growth_MOP2MZOO_2025_clean(2,11, &
+      FLUX_PAR(42)%valpar(           1 ), & 
+      FLUX_PAR(42)%valpar(           2 ), & 
+      FLUX_PAR(42)%valpar(           3 ), & 
+      FLUX_PAR(42)%valpar(           4 ), & 
+      FLUX_PAR(42)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+(+0.30      ) * &
+ f_graz_hol2_mpreys_X_2025(2,11, &
+      FLUX_PAR(43)%valpar(           1 ), & 
+      FLUX_PAR(43)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           5 ,:,:,:) =  &
+ f_hQPPC_geid_2026(2,11, &
+      FLUX_PAR(44)%valpar(           1 ), & 
+      FLUX_PAR(44)%valpar(           2 ), & 
+      FLUX_PAR(44)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           6 ,:,:,:) =  &
+(+0.30      ) * &
+ f_graz_hol2_mpreys_X_2025(2,11, &
+      FLUX_PAR(45)%valpar(           1 ), & 
+      FLUX_PAR(45)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           7 ,:,:,:) =  &
+ f_hQPPC_geid_2026(2,11, &
+      FLUX_PAR(46)%valpar(           1 ), & 
+      FLUX_PAR(46)%valpar(           2 ), & 
+      FLUX_PAR(46)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  2, 11)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   2,   11,    7)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(3,12)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_mort_quadratique_cell_2026(3,12, &
+      FLUX_PAR(47)%valpar(           1 ), & 
+      FLUX_PAR(47)%valpar(           2 ), & 
+      FLUX_PAR(47)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_linear_cell_2026(3,12, &
+      FLUX_PAR(48)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(-1.0       ) * &
+ f_growth_MOPX2MZOO_2025_clean(3,12, &
+      FLUX_PAR(49)%valpar(           1 ), & 
+      FLUX_PAR(49)%valpar(           2 ), & 
+      FLUX_PAR(49)%valpar(           3 ), & 
+      FLUX_PAR(49)%valpar(           4 ), & 
+      FLUX_PAR(49)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+(+0.30      ) * &
+ f_graz_hol2_mpreys_X_2025(3,12, &
+      FLUX_PAR(50)%valpar(           1 ), & 
+      FLUX_PAR(50)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           5 ,:,:,:) =  &
+ f_hQPPX_geid_2026(3,12, &
+      FLUX_PAR(51)%valpar(           1 ), & 
+      FLUX_PAR(51)%valpar(           2 ), & 
+      FLUX_PAR(51)%valpar(           3 ), & 
+      FLUX_PAR(51)%valpar(           4 ), & 
+      FLUX_PAR(51)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           6 ,:,:,:) =  &
+(+0.30      ) * &
+ f_graz_hol2_mpreys_X_2025(3,12, &
+      FLUX_PAR(52)%valpar(           1 ), & 
+      FLUX_PAR(52)%valpar(           2 ) )
+
+ 
+  
+ ss_flux(           7 ,:,:,:) =  &
+ f_hQPPX_geid_2026(3,12, &
+      FLUX_PAR(53)%valpar(           1 ), & 
+      FLUX_PAR(53)%valpar(           2 ), & 
+      FLUX_PAR(53)%valpar(           3 ), & 
+      FLUX_PAR(53)%valpar(           4 ), & 
+      FLUX_PAR(53)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  3, 12)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   3,   12,    7)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(5,11)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_linear_cell_2026(5,11, &
+      FLUX_PAR(54)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(+ 1) *&
+ f_mort_quadratique_cell_2026(5,11, &
+      FLUX_PAR(55)%valpar(           1 ), & 
+      FLUX_PAR(55)%valpar(           2 ), & 
+      FLUX_PAR(55)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  5, 11)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   5,   11,    2)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(6,12)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+1.0       ) * &
+ f_mort_linear_cell_2026(6,12, &
+      FLUX_PAR(56)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(+ 1) *&
+ f_mort_quadratique_cell_2026(6,12, &
+      FLUX_PAR(57)%valpar(           1 ), & 
+      FLUX_PAR(57)%valpar(           2 ), & 
+      FLUX_PAR(57)%valpar(           3 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  6, 12)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   6,   12,    2)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(14,15)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_upt_monod_cell_multX(14,15, &
+      FLUX_PAR(58)%valpar(           1 ), & 
+      FLUX_PAR(58)%valpar(           2 ), & 
+      FLUX_PAR(58)%valpar(           3 ), & 
+      FLUX_PAR(58)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_fQPPC_geid_rem_2025_clean(14,15, &
+      FLUX_PAR(59)%valpar(           1 ), & 
+      FLUX_PAR(59)%valpar(           2 ), & 
+      FLUX_PAR(59)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+ f_hQPPX_geid_2026(14,15, &
+      FLUX_PAR(60)%valpar(           1 ), & 
+      FLUX_PAR(60)%valpar(           2 ), & 
+      FLUX_PAR(60)%valpar(           3 ), & 
+      FLUX_PAR(60)%valpar(           4 ), & 
+      FLUX_PAR(60)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL( 14, 15)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,  14,   15,    3)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(11,13)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_hydrol_C_2026(11,13, &
+      FLUX_PAR(61)%valpar(           1 ), & 
+      FLUX_PAR(61)%valpar(           2 ), & 
+      FLUX_PAR(61)%valpar(           3 ), & 
+      FLUX_PAR(61)%valpar(           4 ), & 
+      FLUX_PAR(61)%valpar(           5 ), & 
+      FLUX_PAR(61)%valpar(           6 ), & 
+      FLUX_PAR(61)%valpar(           7 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL( 11, 13)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,  11,   13,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(12,14)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_hydrol_C_2026(12,14, &
+      FLUX_PAR(62)%valpar(           1 ), & 
+      FLUX_PAR(62)%valpar(           2 ), & 
+      FLUX_PAR(62)%valpar(           3 ), & 
+      FLUX_PAR(62)%valpar(           4 ), & 
+      FLUX_PAR(62)%valpar(           5 ), & 
+      FLUX_PAR(62)%valpar(           6 ), & 
+      FLUX_PAR(62)%valpar(           7 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL( 12, 14)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,  12,   14,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(2,2)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(-0.3       ) * &
+ f_growth_cell_droop_convX_2026(2,2, &
+      FLUX_PAR(63)%valpar(           1 ), & 
+      FLUX_PAR(63)%valpar(           2 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  2,  2)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   2,    2,    1)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(9,9)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(-0.10      ) * &
+ f_upt_monod_cell_multX(9,9, &
+      FLUX_PAR(64)%valpar(           1 ), & 
+      FLUX_PAR(64)%valpar(           2 ), & 
+      FLUX_PAR(64)%valpar(           3 ), & 
+      FLUX_PAR(64)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_fQPPC_geid_2026(9,9, &
+      FLUX_PAR(65)%valpar(           1 ), & 
+      FLUX_PAR(65)%valpar(           2 ), & 
+      FLUX_PAR(65)%valpar(           3 ), & 
+      FLUX_PAR(65)%valpar(           4 ), & 
+      FLUX_PAR(65)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(-0.397     ) * &
+ f_upt_monod_cell_multX(9,9, &
+      FLUX_PAR(66)%valpar(           1 ), & 
+      FLUX_PAR(66)%valpar(           2 ), & 
+      FLUX_PAR(66)%valpar(           3 ), & 
+      FLUX_PAR(66)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+ f_fQPPX_geid_2026(9,9, &
+      FLUX_PAR(67)%valpar(           1 ), & 
+      FLUX_PAR(67)%valpar(           2 ), & 
+      FLUX_PAR(67)%valpar(           3 ), & 
+      FLUX_PAR(67)%valpar(           4 ), & 
+      FLUX_PAR(67)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  9,  9)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   9,    9,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(5,5)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_ppb_han_2025_clean(5,5, &
+      FLUX_PAR(68)%valpar(           1 ), & 
+      FLUX_PAR(68)%valpar(           2 ), & 
+      FLUX_PAR(68)%valpar(           3 ), & 
+      FLUX_PAR(68)%valpar(           4 ), & 
+      FLUX_PAR(68)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+(-0.00      ) * &
+ f_ppb_han_2025_clean(5,5, &
+      FLUX_PAR(69)%valpar(           1 ), & 
+      FLUX_PAR(69)%valpar(           2 ), & 
+      FLUX_PAR(69)%valpar(           3 ), & 
+      FLUX_PAR(69)%valpar(           4 ), & 
+      FLUX_PAR(69)%valpar(           5 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(-0.397     ) * &
+ f_upt_monod_cell_multX(5,5, &
+      FLUX_PAR(70)%valpar(           1 ), & 
+      FLUX_PAR(70)%valpar(           2 ), & 
+      FLUX_PAR(70)%valpar(           3 ), & 
+      FLUX_PAR(70)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+ f_fQPPX_geid_2026(5,5, &
+      FLUX_PAR(71)%valpar(           1 ), & 
+      FLUX_PAR(71)%valpar(           2 ), & 
+      FLUX_PAR(71)%valpar(           3 ), & 
+      FLUX_PAR(71)%valpar(           4 ), & 
+      FLUX_PAR(71)%valpar(           5 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  5,  5)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   5,    5,    4)
+
+ deallocate (ss_flux)
+ ! ==========================================
+
+ 
+ nbproc_loc = size(FLUX_VAL(7,7)%idproc)
+ Allocate(ss_flux(nbproc_loc+1,nx_min:nx_max,ny_min:ny_max,nz_max))
+  
+ ss_flux(           1 ,:,:,:) =  &
+(+ 1) *&
+ f_regul_Chl_bak2026(7,7, &
+      FLUX_PAR(72)%valpar(           1 ), & 
+      FLUX_PAR(72)%valpar(           2 ), & 
+      FLUX_PAR(72)%valpar(           3 ), & 
+      FLUX_PAR(72)%valpar(           4 ), & 
+      FLUX_PAR(72)%valpar(           5 ), & 
+      FLUX_PAR(72)%valpar(           6 ) )
+
+ 
+  
+ ss_flux(           2 ,:,:,:) =  &
+ f_upt_monod_cell_multX(7,7, &
+      FLUX_PAR(73)%valpar(           1 ), & 
+      FLUX_PAR(73)%valpar(           2 ), & 
+      FLUX_PAR(73)%valpar(           3 ), & 
+      FLUX_PAR(73)%valpar(           4 ) )
+
+ 
+  
+ ss_flux(           3 ,:,:,:) =  &
+(- 1) *&
+ f_mort_linear_cell_2026(7,7, &
+      FLUX_PAR(74)%valpar(           1 ) )
+
+ 
+  
+ ss_flux(           4 ,:,:,:) =  &
+(- 1) *&
+ f_mort_quadratique_cell_2026(7,7, &
+      FLUX_PAR(75)%valpar(           1 ), & 
+      FLUX_PAR(75)%valpar(           2 ), & 
+      FLUX_PAR(75)%valpar(           3 ) )
+
+ 
+  
+ ss_flux(           5 ,:,:,:) =  &
+(- 1) *&
+ f_graz_hol2_mpreys_X_2025(7,7, &
+      FLUX_PAR(76)%valpar(           1 ), & 
+      FLUX_PAR(76)%valpar(           2 ) )
+   
+    ss_flux(nbproc_loc+1,:,:,:) = FLUX_VAL(  7,  7)%val
+   
+call eco3m_write_fluxoutputs(ss_flux,   7,    7,    5)
 
  deallocate (ss_flux)
  ! ==========================================

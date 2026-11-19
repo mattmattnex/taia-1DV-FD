@@ -5,7 +5,7 @@ __pycache__/
 .ipynb_checkpoints/
 old/
 
-# Fortran / compiled products
+# Fortran
 *.o
 *.mod
 *.so
@@ -14,7 +14,7 @@ a.out
 Eco3M/MAKE/Compile/
 Eco3M/MAKE/Compile_py/
 
-# Simulation outputs (regenerable, often large)
+# Simulation outputs
 experiments/*/output/
 Eco3M/OUTPUTS/
 *.mp4

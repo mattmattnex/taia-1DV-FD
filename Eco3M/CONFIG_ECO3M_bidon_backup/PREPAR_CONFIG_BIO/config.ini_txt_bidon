@@ -1,0 +1,94 @@
+# Default configuration for the Eco3M modelling platform 
+# Last modification: Juil 2019
+#
+#------------------------------------------------------------------------
+#         MODEL Plankton Functional Types and other compartments
+#------------------------------------------------------------------------
+#  - bacteria  (in C,N)
+#  - small phytoplankton (expressed in C, Chl, N), 
+#  - large  phytoplankton  (expressed in C, Chl, N)
+#  - one zooplankton (in C,N)
+#  - two nutrients (NO3,NH4), 
+#  - Dissolved Organic Matter DOM (in C,N), 
+#  - Detrital matter DET (C,N)
+#-------------------------------------------------------------------------
+# ** IMPORTANT INSTRUCTIONS  **
+# --------------------------------
+# 1/ Always begin an empty line or a comment line by a "#"  on the first column 
+# 2/ Don't write anything after the required information on a given line
+# 3/ On a given line, variables must be separated by a ":" without any space left
+# 4/ Compartments name must be the following unless additional compartments are created :
+#    zoo / phy / bac / det / mod / mid / mip
+#    (zoo = zooplantkon; phy = phytoplankton; bac = bacteria; det = detritus; mod = dissolved organic matter
+#    mid = dissolved inorganic matter; mip = particulate inorganic matter)
+# 5/ If additional compartments are created, their name must not include space or special character
+#    and must not exceed 10 characters
+# 6/ All the variables name must be in lower case, except chemical elements such
+#    as: C,N,P,Si,Fe,Chl,NO3,NH4,O2,Zn...
+# 7/ if the number of characters in a line of the flux matrix exceeds the L_CHAIN value, the latter must be
+#    increased in the src_eco3m/eco3m_string.F90 file
+#
+#### NAME OF THE CONFIGURATION OF THE BIOGECHEMICAL MODEL HANDLED BY ECO3M
+# The configuration name will be: Eco3M_config. Just the config part is required here:
+Eco3M_MED
+######## COMPARTMENTS / SUB-COMPARTMENTS / STATE VARIABLES OF THE BIOGEOCHEMICAL MODEL
+# --------------------------------
+# nb of compartments:nb of sub-compartments:nb of state variables
+2:2:2
+#Compartiments Zooplanctonique
+#Compartiments Phytoplanctoniques
+phy:1	
+PHYS:N
+#Compartiments des Bacteries Heterotrophes
+#Compartment for detrital organic matter
+#Compartment for dissolved organic matter
+#Compartment for nutrients
+mid:1
+NO3:N
+# 
+################################################################################
+# FLOW MATRIX:
+# This matrix contains all the fluxes between state variables
+# 
+#-----------------------------------------------------------------
+# important instructions:
+# ---------------------
+# 1/ since this matrix is symmetric, only the upper half must be filled 
+#     by non-null fluxes between variables var(ili) and var(jcol)
+#     NOTE THAT ili MUST ALWAYS BE < jcol
+# 2/ a given flux between var(ili) and var (jcol) must be introduced as follows:
+#    ili;jcol:signe;proc(list of parameters separed by  ">")
+# 4/ if a given flux includes several processes or functions, they must be separated by  ":"
+# 5/ only the non-empty elements of the flux matrix must be reported
+# 6/ fluxes betweeen a model state variable and a variable not reprsented in the model 
+#    (e.g. photosynthesis if CO2 is not explicitly represented) must be introduced on the diagonal 
+#    of the flux matrix
+# 7/ The flux matrix must end by the line "finflux"
+#-----------------------------------------------------------------
+#
+# Total number of functions involved in the different element of the flow matrix:
+2
+# Beginning of the flow matrix:
+#################################################################################
+#CROISSANCES DES ORGANISMES EN CELLULES
+#################################################################################
+##################################################################################
+# UPTAKE DE NUTRIMENTS PAR LES OSMOTROPHES
+##################################################################################
+#---------------------------------------------------------------------------------
+#Uptake by Picophytoplankton
+#---------------------------------------------------------------------------------
+# Uptake of NO3
+PHYS_N;NIT:-;f_upt(PHYS_N>NIT>K_PHYS_NIT>V_PHYS_NIT):+1.0;f_mort_l(MORTL_PHYS)
+#---------------------------------------------------------------------------------
+#
+finflux
+#################################################################################
+# Rapport  Chlorophylle/Carbone  en (g chl)/(mol C) 
+#(0 = rapport constant et donne apres les ':'
+# et 1 = rapport variable calcule par le prog. mais a initialiser) :
+1:
+#################################################################################
+#  function for light extinction (not used by the RGB extonction model !!!! VERIF !!!!!) 
+f_extinc(0.0384>0.029)
+##################################################################################

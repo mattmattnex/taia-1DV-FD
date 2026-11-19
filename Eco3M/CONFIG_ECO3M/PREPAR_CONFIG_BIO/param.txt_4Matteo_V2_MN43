@@ -1,0 +1,89 @@
+N1_PREY_CELL_MZOO      BAC_cell
+N2_PREY_CELL_MZOO      PHY_cell
+N1_PREY_C_MZOO         BAC_C
+N2_PREY_C_MZOO         PHY_C
+I1_PREY_MZOO        2.08E+02
+I2_PREY_MZOO        1.03E+00
+F1_PREY_MZOO        2.08E-06
+F2_PREY_MZOO        2.58E-08
+N_PREY_MZOO          2.
+CHL_C_MAX_PHY       1.20
+ASTAR_CHL_PHY      2.30E-06
+Q_MIN_MZOO_CN           3.00
+Q_MAX_MZOO_CN          22.00
+Q_MIN_PHY_CN           3.00
+Q_MAX_PHY_CN          22.00
+Q_MIN_BAC_CN            3.00
+Q_MAX_BAC_CN           22.00
+PHI1_PREY_MZOO          0.50
+PHI2_PREY_MZOO          0.50
+betaKTW	        2.00E+00
+PHI_MAX_PHY        1.15E-07
+SIG_PS2_PHY        1.15E+01
+Q_MIN_MZOO_N        1.36E-08
+Q_MAX_MZOO_N        3.33E-08
+Q_MIN_PHY_N        1.72E-14
+Q_MAX_PHY_N        4.20E-14
+Q_MIN_BAC_N	        8.52E-17
+Q_MAX_BAC_N	        2.08E-16
+K_PHY_LDON	        5.66E-06
+V_PHY_LDON	        8.53E-19
+Q_MIN_MZOO_C        1.00E-07
+Q_MAX_MZOO_C        3.00E-07
+Q_MIN_PHY_C        1.26E-13
+Q_MAX_PHY_C        3.78E-13
+Q_MIN_BAC_C	        6.25E-16
+Q_MAX_BAC_C	        1.87E-15
+GROWTH_PHY	        2.03E-05
+K_BAC_LDON          1.23E-06
+V_BAC_LDON          1.01E-20
+K_BAC_LDOC          8.12E-07
+V_BAC_LDOC          9.97E-20
+GROWTH_MZOO         1.00E-06
+ASTAR_PHY             20.00
+GROWTH_BAC          4.83E-05
+K_PHY_NIT          9.98E-07
+V_PHY_NIT          8.53E-19
+MORTL_PHY          1.02E-06
+MORTL_MZOO	        5.00E-08
+MORTL_BAC	        2.42E-06
+K_BAC_NIT           2.17E-07
+V_BAC_NIT           1.01E-20
+COSTM_PHY              0.00
+COSTG_PHY              0.00
+COSTM_BAC               0.00
+COSTG_BAC                0.0
+COSTM_MZOO               0.0
+COSTG_MZOO               0.3
+COST_uNIT	           0.397
+COST_uLDOC              0.10
+COST_uLDON              0.00
+MORTQ_MZOO          2.00E-07
+MORTQ_PHY          4.00E-13
+TAU_PHY            2.60E-03
+K_D_PHY            4.50E-08
+K_R_PHY            2.60E-04
+TT_MOP_C                 7.5
+TT_MOP_N                 7.5
+P_EXUD_PHY              0.00
+P_RELEA_PHY             0.00
+P_REMIN_BAC             0.00
+P_RELEA_BAC             0.00
+P_EXCRE_MZOO            0.70
+P_PELOT_MZOO            0.30
+MORTQ_BAC          4.00E-14
+ NIT	        15
+ MODL_N      14
+ MODL_C      13
+ MOP_N       12
+ MOP_C       11
+ BAC_N       10
+ BAC_C       9
+ BAC_cell    8
+ PHY_Chl     7
+ PHY_N       6
+ PHY_C       5
+ PHY_cell	4
+ MZOO_N	3
+ MZOO_C	2
+ MZOO_cell	1

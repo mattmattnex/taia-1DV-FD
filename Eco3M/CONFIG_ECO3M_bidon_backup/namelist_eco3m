@@ -1,0 +1,135 @@
+!----------------------------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------------------------
+!
+!          Default namelist for 1D, 2D or 3D simulations 
+!            (with keys NCOUPL && M3D_NCOUPL or with key COUPL)
+!
+!=====================================================================================================
+!======= Files for the configuration of the biogeochemical model included in the Eco3M platform  =====
+!=====================================================================================================
+&nam_eco3m_config
+eco3m_root_dir   = "../" ! Name of the root directory for Eco3M
+filename_config  = "CONFIG_ECO3M/config.ini" ! Biogeochemical model's configuration (flux matrix). Must be placed in CONFIG_ECO3M
+filename_confmod = "CONFIG_ECO3M/modele.def" ! Process functions (from the F_PROCESS library) used by the model. Must be placed in CONFIG_ECO3M
+/
+
+!==================================================================================================================
+!================================    RUN parameters     ======================================================
+!
+! &nam_eco3m_run gives the parameters that are always used 
+! &nam_eco3m_run_main gives the parameters that are used only if Eco3M is the main program       
+!                  i.e. for CPP keys:  (NCOUPL && M3D_NCOUPL) or (COUPL & key_tke_eco3m)
+!===================================================================================================================
+&nam_eco3m_run
+run_name = "sim_eco3m_1DV"  ! simulation name
+dt_bio = 240.         ! Simulation time-step (in seconds) 
+pos_nzmax = "BOTT" ! Position of the nz_max point (ie BOTT for bottom or SURF for surface)
+/
+
+&nam_eco3m_run_main
+run_duration = 10.0  ! Simulation duration in days 
+dt_save_bio = 360.     ! Saving frequency (in minutes)
+
+! Spatial dimensions (mostly useful for the M3D_NCOUPL)
+nx_min = 1  ! First x-dimension index 
+nx_max = 1  ! Last  x-dimension index
+ny_min = 1  ! First y-dimension index
+ny_max = 1  ! Last  y-dimension index
+nz_max = 42  ! Last  z-dimension index 
+
+/
+
+!========================================================================================================
+!================================ IRRADIANCE parameters =================================================
+!========================================================================================================
+&nam_eco3m_irrad
+fichirrad = "IRR_CODEPHYS" ! select between IRR_FONCTION or IRR_FILE, or IRR_CODEPHYS (only in COUPL mode)
+
+!-- if fichirrad = "IRR_FILE", enter here the name of the file containing the irradiance data
+filename_irrad = "CONFIG_ECO3M/irradiance_file.dat" ! Irradiance data (only used with NCOUPL key if read from a file)
+
+dt_irrad = 240 ! Time step for irradiance update (in seconds). 
+               ! Also corresponds to the data frequency in filename_irrad
+irrad_max = 450  ! used only if fichirrad="IRR_FONCTION"
+irr2par = 0.43   ! Conversion factor from irradiance to PAR
+albedo = 0.05    ! Albedo (only used with NCOUPL key)
+irr_param = 1.0  ! Conversion factor (useful if irradiance data are in µEinstein m-2 since W m-2 are expected)
+/
+!====================================================================================================
+!=====================       RGB parameters (only with the RGB key)  ================================
+!====================================================================================================
+&nam_eco3m_rgb
+filename_krgb = "CONFIG_ECO3M/INPUTS/kRGB61.txt"     ! Extinction coefficients (only used with  RGB key)
+rgb_nbands=3
+/
+
+!=================================================================================================== 
+!=================      INITIAL CONDITIONS   =====================================
+!
+!         only for CPP keys  (NCOUPL && M3D_NCOUPL)  or (COUPL && key_tke_eco3m) 
+!=================================================================================================== 
+&nam_eco3m_ic
+ic_input_directory = "CONFIG_ECO3M/C_INI/1DV/C_INI_DYFAMED/" ! Input directory for concentrations (ended by a "/")
+default_conc = 1e-30  ! Default concentration used for the initialization of a state variable if no ini file exists
+default_temp = 18  ! Default temperature (C) if NCOUPL
+default_salt = 35  ! Default salinity if NCOUPL
+/
+!====================================================================================================
+!=======================================   OUTPUT PARAMETERS ========================================
+!====================================================================================================
+! Parameters (used for the dynamical allocation)
+&nam_eco3m_outpar
+output_dir = "OUTPUTS/"  ! Output directory
+num_outphy = 5  !  Number of variables other than state variables to save (dim of outphy array)
+/
+
+&nam_eco3m_outphy
+! the number of outputs is defined in the nam_eco3m_outpar field (variable num_outphy)
+! Must contain the following elements:
+! Variable | Filename 
+outphy(1) = "e_parz"
+outphy(2) = "irrad"
+outphy(3) = "wind"
+outphy(4) = "temp"
+outphy(5) = "mld"
+/
+!outphy(1) = "gpps_int"
+!outphy(2) = "gppl_int"
+!outphy(3) = "gpps_surf"
+!outphy(4) = "gppl_surf"
+!outphy(5) = "npps_int"
+!outphy(6) = "nppl_int"
+!outphy(7) = "npps_surf"
+!outphy(8) = "nppl_surf"
+!outphy(9) = "gbp_int"
+!/
+
+!outphy(1) = "e_par"
+!outphy(2) = "e_parz"
+!outphy(3) = "wind"
+!outphy(4) = "kextinc"
+!outphy(5) = "temp"
+!outphy(6) = "sal"
+!outphy(7) = "Kz"
+!outphy(8) = "vitx"
+!outphy(9) = "vity"
+!outphy(10) = "raut"
+!outphy(11) = "mld"
+!outphy(12) = "tke"
+!outphy(13) = "irrad"
+
+
+&nam_eco3m_outflux_nb
+num_outflux =  0  ! Number of grid nodes where biogeochemical fluxes will be saved if the SAVE_FLUX key is used
+/
+
+&nam_eco3m_outflux_loc
+! Geographical location of the fluxes to be saved, given in the form  :
+!     | x index | y index | z index
+ outflux(1) = 1, 1, 10
+/
+
+&nam_eco3m_outflux_freq
+dt_outflux =  240  ! frequency in minutes 
+/
+

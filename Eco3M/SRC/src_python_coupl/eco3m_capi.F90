@@ -168,33 +168,39 @@ contains
 ! Under COUPL, eco3m_compute_eparz does not apply albedo -- it assumes
 ! the physical model already did. The namelist "albedo" entry is dead.
 !-----------------------------------------------------------------------
-    subroutine eco3m_c_set_physics(temp, sal, irrad_surf, time_s) &
+subroutine eco3m_c_set_physics(temp, sal, irrad_surf, time_s) &
                bind(C, name="eco3m_c_set_physics")
-        real(c_double), intent(in) :: temp(nz_max), sal(nz_max)
+        real(c_double), intent(in) :: temp(nx_min:nx_max, nz_max)
+        real(c_double), intent(in) :: sal (nx_min:nx_max, nz_max)
         real(c_double), value      :: irrad_surf, time_s
-        integer :: k
+        integer :: i, k
 
         do k = 1, nz_max
-            TEMP_BIO(nx_min:nx_max, ny_min:ny_max, k) = temp(k)
-            SAL_BIO (nx_min:nx_max, ny_min:ny_max, k) = sal(k)
+            do i = nx_min, nx_max
+                TEMP_BIO(i, ny_min, k) = temp(i, k)
+                SAL_BIO (i, ny_min, k) = sal (i, k)
+            end do
         end do
 
         irrad(nx_min:nx_max, ny_min:ny_max) = irrad_surf
         tps = time_s
     end subroutine eco3m_c_set_physics
 
-!-- conc(k, ivar), Fortran-ordered. Needs a loop: VAR is an array of
+!-- conc(i, k, ivar). The ivar loop is unavoidable: VAR is an array of
 !-- derived types, so concentrations are not one contiguous block.
     subroutine eco3m_c_set_conc(conc) bind(C, name="eco3m_c_set_conc")
-        real(c_double), intent(in) :: conc(nz_max, nbvar)
-        integer :: ivar, k
+        real(c_double), intent(in) :: conc(nx_min:nx_max, nz_max, nbvar)
+        integer :: ivar, i, k
 
         do ivar = 1, nbvar
             do k = 1, nz_max
-                VAR(ivar)%conc(nx_min:nx_max, ny_min:ny_max, k) = conc(k, ivar)
+                do i = nx_min, nx_max
+                    VAR(ivar)%conc(i, ny_min, k) = conc(i, k, ivar)
+                end do
             end do
         end do
     end subroutine eco3m_c_set_conc
+
 
 !=======================================================================
 ! 6. THE STEP
@@ -209,50 +215,60 @@ contains
 !=======================================================================
 ! 7. OUTPUTS
 !=======================================================================
-! TEND is a RATE in per-second units.
-!-----------------------------------------------------------------------
     subroutine eco3m_c_get_tend(tend_out) bind(C, name="eco3m_c_get_tend")
-        real(c_double), intent(out) :: tend_out(nz_max, nbvar)
-        integer :: ivar, k
+        real(c_double), intent(out) :: tend_out(nx_min:nx_max, nz_max, nbvar)
+        integer :: ivar, i, k
 
         do ivar = 1, nbvar
             do k = 1, nz_max
-                tend_out(k, ivar) = TEND(nx_min, ny_min, k, ivar)
+                do i = nx_min, nx_max
+                    tend_out(i, k, ivar) = TEND(i, ny_min, k, ivar)
+                end do
             end do
         end do
     end subroutine eco3m_c_get_tend
 
     subroutine eco3m_c_get_conc(conc_out) bind(C, name="eco3m_c_get_conc")
-        real(c_double), intent(out) :: conc_out(nz_max, nbvar)
-        integer :: ivar, k
+        real(c_double), intent(out) :: conc_out(nx_min:nx_max, nz_max, nbvar)
+        integer :: ivar, i, k
 
         do ivar = 1, nbvar
             do k = 1, nz_max
-                conc_out(k, ivar) = VAR(ivar)%conc(nx_min, ny_min, k)
+                do i = nx_min, nx_max
+                    conc_out(i, k, ivar) = VAR(ivar)%conc(i, ny_min, k)
+                end do
             end do
         end do
     end subroutine eco3m_c_get_conc
 
-!-- PAR profile.
+!-- PAR profile per member, (ne, nz). Still the cheapest check on dz sign
+!-- and grid orientation.
     subroutine eco3m_c_get_eparz(arr) bind(C, name="eco3m_c_get_eparz")
-        real(c_double), intent(out) :: arr(nz_max)
-        integer :: k
+        real(c_double), intent(out) :: arr(nx_min:nx_max, nz_max)
+        integer :: i, k
+
         do k = 1, nz_max
-            arr(k) = E_PARZ(nx_min, ny_min, k)
+            do i = nx_min, nx_max
+                arr(i, k) = E_PARZ(i, ny_min, k)
+            end do
         end do
     end subroutine eco3m_c_get_eparz
 
-!-- Surface PAR just below the interface
-    subroutine eco3m_c_get_epar(v) bind(C, name="eco3m_c_get_epar")
-        real(c_double), intent(out) :: v
-        v = E_PAR(nx_min, ny_min)
+!-- Surface PAR per member, after irr2par/irr_param.
+    subroutine eco3m_c_get_epar(arr) bind(C, name="eco3m_c_get_epar")
+        real(c_double), intent(out) :: arr(nx_min:nx_max)
+        integer :: i
+        do i = nx_min, nx_max
+            arr(i) = E_PAR(i, ny_min)
+        end do
     end subroutine eco3m_c_get_epar
 
-!-- A single element of the flux matrix, for debugging individual
+!-- One flux-matrix element, (ne, nz). Zeros if that element carries no
+!-- process: most do not, and their %val was never allocated.
     subroutine eco3m_c_get_flux(ivar, jvar, arr) bind(C, name="eco3m_c_get_flux")
         integer(c_int), value       :: ivar, jvar
-        real(c_double), intent(out) :: arr(nz_max)
-        integer :: k
+        real(c_double), intent(out) :: arr(nx_min:nx_max, nz_max)
+        integer :: i, k
 
         arr = 0.d0
         if (ivar < 1 .or. ivar > nbvar) return
@@ -260,7 +276,9 @@ contains
         if (.not. allocated(FLUX_VAL(ivar, jvar)%idproc)) return
 
         do k = 1, nz_max
-            arr(k) = FLUX_VAL(ivar, jvar)%val(nx_min, ny_min, k)
+            do i = nx_min, nx_max
+                arr(i, k) = FLUX_VAL(ivar, jvar)%val(i, ny_min, k)
+            end do
         end do
     end subroutine eco3m_c_get_flux
 

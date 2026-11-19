@@ -1,0 +1,273 @@
+N1_PREY_CELL_MZOO      CIL_cell
+N2_PREY_CELL_MZOO      HNF_cell
+N3_PREY_CELL_MZOO      PHYL_cell
+N1_PREY_CELL_HNF       PHYS_cell
+N2_PREY_CELL_HNF       BAC_cell
+N1_PREY_CELL_CIL       HNF_cell
+N2_PREY_CELL_CIL       PHYS_cell
+N3_PREY_CELL_CIL       BAC_cell
+N1_PREY_C_MZOO         CIL_C
+N2_PREY_C_MZOO         HNF_C
+N3_PREY_C_MZOO         PHYL_C
+N2_PREY_C_CIL          PHYS_C
+N2_PREY_N_CIL          PHYS_N
+N2_PREY_P_CIL          PHYS_P
+N3_PREY_C_CIL          BAC_C
+N3_PREY_N_CIL          BAC_N
+N3_PREY_P_CIL          BAC_P
+N1_PREY_C_CIL          HNF_C
+N1_PREY_N_CIL          HNF_N
+N1_PREY_P_CIL          HNF_P
+N1_PREY_C_HNF          PHYS_C
+N1_PREY_N_HNF          PHYS_N
+N1_PREY_P_HNF          PHYS_P
+N2_PREY_C_HNF          BAC_C
+N2_PREY_N_HNF          BAC_N
+N2_PREY_P_HNF          BAC_P
+I1_PREY_HNF	        6.31E-04
+I2_PREY_HNF         8.03E-03
+I1_PREY_CIL	        9.61E-03
+I2_PREY_CIL         1.61E-01
+I3_PREY_CIL	        2.05E+00
+I1_PREY_MZOO        1.75E-03
+I2_PREY_MZOO        1.71E+00
+I3_PREY_MZOO        7.32E-02
+F1_PREY_MZOO        5.84E-07
+F2_PREY_MZOO        1.71E-06
+F3_PREY_MZOO        3.66E-07
+F1_PREY_CIL	        9.61E-09
+F2_PREY_CIL	        3.21E-09
+F3_PREY_CIL	        6.82E-09
+F1_PREY_HNF	        1.26E-11
+F2_PREY_HNF	        2.68E-11
+N_PREY_HNF           2.
+N_PREY_CIL           3.
+N_PREY_MZOO          3.
+CHL_C_MAX_PHYL        1.20
+CHL_C_MAX_PHYS        1.20
+ASTAR_CHL_PHYS      1.72E-06
+ASTAR_CHL_PHYL      1.84E-06
+PHYL_INHIB_NIT      3.00E-06
+PHYL_INHIB_DOP      3.00E-06
+PHYS_INHIB_NIT      3.00E-06
+PHYS_INHIB_DOP      3.00E-06
+PHYS_INHIB_DON      4.00E-07
+PHYL_INHIB_DON      4.00E-07
+BAC_INHIB_DON       4.00E-07
+BAC_INHIB_DOP       3.00E-06
+BAC_INHIB_NIT       3.00E-06
+Q_MIN_PHYS_CN           3.50
+Q_MAX_PHYS_CN          22.00
+Q_MIN_PHYS_CP          70.00
+Q_MAX_PHYS_CP         300.00
+Q_MIN_PHYL_CN           3.50
+Q_MAX_PHYL_CN          22.00
+Q_MIN_PHYL_CP          70.00
+Q_MAX_PHYL_CP         300.00
+PHI1_PREY_MZOO          0.40
+PHI2_PREY_MZOO          0.10
+PHI3_PREY_MZOO          0.50
+PHI1_PREY_HNF           0.30
+PHI2_PREY_HNF           0.70
+PHI1_PREY_CIL           0.50
+PHI2_PREY_CIL           0.20
+PHI3_PREY_CIL           0.30
+betaKTW	        2.00E+00
+PHI_MAX_PHYS        8.62E-08
+PHI_MAX_PHYL        1.84E-07
+SIG_PS2_PHYS        1.74E+01
+SIG_PS2_PHYL        7.08E+00
+Q_MIN_PHYS_N        1.08E-15
+Q_MAX_PHYS_N        2.27E-15
+Q_MIN_PHYS_P        7.95E-17
+Q_MAX_PHYS_P        1.14E-16
+Q_MIN_PHYS_C        7.95E-15
+Q_MAX_PHYS_C        2.39E-14
+Q_MIN_PHYL_N        4.24E-13
+Q_MAX_PHYL_N        8.88E-13
+Q_MIN_PHYL_P        3.11E-14
+Q_MAX_PHYL_P        4.44E-14
+Q_MIN_PHYL_C        3.11E-12
+Q_MAX_PHYL_C        9.32E-12
+Q_MIN_BAC_CN            3.50
+Q_MAX_BAC_CN           22.00
+Q_MIN_BAC_CP           70.00
+Q_MAX_BAC_CP          300.00
+Q_MIN_HNF_CN            3.50
+Q_MAX_HNF_CN           22.00
+Q_MIN_HNF_CP           70.00
+Q_MAX_HNF_CP          300.00
+Q_MIN_CIL_CN            3.50
+Q_MAX_CIL_CN           22.00
+Q_MIN_CIL_CP           70.00
+Q_MAX_CIL_CP          300.00
+K_PHYL_LDOP	        1.67E-06
+V_PHYL_LDOP	        9.44E-19
+K_PHYL_LDON	        3.34E-05
+V_PHYL_LDON	        1.89E-17
+K_PHYS_LDOP	        3.35E-08
+V_PHYS_LDOP	        2.02E-21
+K_PHYS_LDON	        6.70E-07
+V_PHYS_LDON	        4.04E-20
+K_BAC_SLDOC	        8.86E-06
+V_BAC_SLDOC	        9.06E-20
+Q_MIN_BAC_N	        8.52E-17
+Q_MAX_BAC_N	        1.79E-16
+Q_MIN_BAC_P	        6.25E-18
+Q_MAX_BAC_P	        8.93E-18
+Q_MIN_BAC_C	        6.25E-16
+Q_MAX_BAC_C	        1.87E-15
+Q_MIN_HNF_N	        1.81E-14
+Q_MAX_HNF_N	        3.80E-14
+Q_MIN_HNF_P	        1.33E-15
+Q_MAX_HNF_P	        1.90E-15
+Q_MIN_HNF_C	        1.33E-13
+Q_MAX_HNF_C	        3.99E-13
+Q_MIN_CIL_N	        1.77E-11
+Q_MAX_CIL_N	        3.71E-11
+Q_MIN_CIL_P	        1.30E-12
+Q_MAX_CIL_P	        1.86E-12
+Q_MIN_CIL_C	        1.30E-10
+Q_MAX_CIL_C	        3.90E-10
+Q_MIN_MZOO_C        2.50E-07
+Q_MAX_MZOO_C        7.50E-07
+Q_MOY_MZOO_N        3.92E-08
+Q_MOY_MZOO_P        2.70E-09
+GROWTH_PHYS	        1.78E-05
+GROWTH_PHYL	        2.13E-05
+K_BAC_LDOP          4.22E-08
+V_BAC_LDOP          4.32E-22
+K_BAC_LDON          8.44E-07
+V_BAC_LDON          8.63E-21
+K_BAC_LDOC          6.50E-07
+V_BAC_LDOC          9.97E-20
+GROWTH_HNF          3.51E-05
+GROWTH_CIL	        8.56E-06
+GROWTH_MZOO         7.00E-07
+ASTAR_PHYS             20.00
+ASTAR_PHYL             10.00
+GROWTH_BAC          4.83E-05
+K_PHYS_NIT          1.18E-07
+V_PHYS_NIT          4.04E-20
+K_PHYS_AMMO         1.06E-07
+V_PHYS_AMMO         4.04E-20
+K_PHYS_PHOS         1.34E-08
+V_PHYS_PHOS         2.02E-21
+K_PHYL_NIT          5.89E-06
+V_PHYL_NIT          1.89E-17
+K_PHYL_AMMO         5.27E-06
+V_PHYL_AMMO         1.89E-17
+K_PHYL_PHOS         6.68E-07
+V_PHYL_PHOS         9.44E-19
+MORTL_PHYL          8.51E-07
+MORTL_PHYS	        7.12E-07
+MORTL_HNF	        1.40E-06
+MORTL_MZOO	        1.54E-07
+MORTL_BAC	        1.93E-06
+MORTL_CIL	        3.42E-07
+K_BAC_AMMO          1.33E-07
+V_BAC_AMMO          8.63E-21
+K_BAC_PHOS          1.69E-08
+V_BAC_PHOS          4.32E-22
+K_BAC_NIT           1.49E-07
+V_BAC_NIT           8.63E-21
+COSTM_PHYL              0.00
+COSTG_PHYL              0.00
+COSTM_PHYS              0.00
+COSTG_PHYS              0.00
+COSTM_BAC               0.00
+COSTG_BAC                1.0
+COSTM_HNF                0.0
+COSTG_HNF                0.1
+COSTM_CIL                0.0
+COSTG_CIL                0.2
+COSTM_MZOO               0.0
+COSTG_MZOO               0.3
+COST_uAMMO             0.198
+COST_uNIT	           0.397
+COST_uPHOS             0.155
+COST_uLDOC              0.10
+COST_uSLDOC             0.25
+COST_uLDOP              0.00
+COST_uLDON              0.00
+MORTQ_MZOO          1.40E-07
+MORTQ_PHYL          3.00E-12
+TAU_PHYS            8.88E-04
+K_D_PHYS            4.50E-08
+K_R_PHYS            2.60E-04
+TAU_PHYL            2.38E-03
+K_D_PHYL            4.50E-08
+K_R_PHYL            2.60E-04
+TT_MOP_C                 7.5
+TT_MOP_N                 7.5
+TT_MOP_P                 7.5
+TT_MOPL_C                4.5
+TT_MOPL_N                4.5
+TT_MOPL_P                4.5
+P_EXUD_PHY              0.00
+P_RELEA_PHY             1.00
+P_REMIN_BAC             0.30
+P_RELEA_BAC             0.70
+P_EXCRE_ZOO             1.00
+P_RELEA_ZOO             0.00
+P_EXCRE_MZOO            0.70
+P_PELOT_MZOO            0.30
+P_CONVERT_MZOO_NUT      0.10
+P_CONVERT_MZOO_MO       0.90
+TAUX_NITRIF         3.00E-06
+JUV_MZOO_CIL            0.00
+JUV_MZOO_HNF            0.00
+JUV_MZOO_MOP            1.00
+ Sil_SI      42
+ CaCO3_C     41
+ Alk_C	40
+ DIC_C	39
+ OXY_O	38
+ PHOS	37
+ AMMO	36
+ NIT	        35
+ MODSL_C	34
+ MODL_P	33
+ MODL_N	32
+ MODL_C	31
+ MOPL_P	30
+ MOPL_N	29
+ MOPL_C	28
+ MOPS_P	27
+ MOPS_N	26
+ MOPS_C	25
+ BAC_P	24
+ BAC_N	23
+ BAC_C	22
+ BAC_cell	21
+ PHYL_Chl	20
+ PHYL_P	19
+ PHYL_N	18
+ PHYL_C	17
+ PHYL_cell	16
+ PHYS_Chl	15
+ PHYS_P	14
+ PHYS_N	13
+ PHYS_C	12
+ PHYS_cell	11
+ HNF_P	10
+ HNF_N	9
+ HNF_C	8
+ HNF_cell	7
+ CIL_P	6
+ CIL_N	5
+ CIL_C	4
+ CIL_cell	3
+ MZOO_C	2
+ MZOO_cell	1
+RQMZ              1.26
+RQCZ              1.11
+RQHNF             1.03
+RQBAC             1.00
+PQPHYL            1.40
+PQPHYS            1.40
+RQPHY             1.00
+NQ                2.00
+RQMZ2         3.78E-01
+RQGCIL        1.67E-01
+RQGHNF        7.73E-02

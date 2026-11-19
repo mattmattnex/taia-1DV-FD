@@ -44,13 +44,17 @@ class State:
     N2:   torch.Tensor = field(init=False)
     mld:  torch.Tensor = field(init=False)
     
+    # Biogeochemistry (Eco3M)
+    bgc: torch.Tensor = field(init=False)
+
     def __post_init__(self):
         cfg = self._cfg
         
         ne, nz = cfg.ne, cfg.nz
         ckw = cfg.carr_kwargs
         fkw = cfg.farr_kwargs
-        
+        f64kw = cfg.f64arr_kwargs
+
         # Time
         self.time = torch.tensor(0.0, **fkw)
 
@@ -64,18 +68,18 @@ class State:
         self.sig_z_t = torch.zeros(ne, nz+1, 1, **fkw)
         
         # Noise
-        self.dB_w   = torch.zeros(ne, nz+1, 1, **fkw)
-        self.dB_c   = torch.zeros(ne,   nz, 1, **fkw)
+        self.dB_w = torch.zeros(ne, nz+1, 1, **fkw)
+        self.dB_c = torch.zeros(ne,   nz, 1, **fkw)
 
         # Wave
-        self.us    = torch.zeros(ne, nz+1, 1, **ckw)
+        self.us = torch.zeros(ne, nz+1, 1, **ckw)
 
         # Vertical mixing
         self.az_m = torch.zeros(ne, nz+1, 1, **fkw)
         self.az_t = torch.zeros(ne, nz+1, 1, **fkw)
         
         # TKE closure
-        self.tke   = torch.zeros(ne, nz+1, 1, **fkw)
+        self.tke = torch.zeros(ne, nz+1, 1, **fkw)
         self.dissl = torch.zeros(ne, nz+1, 1, **fkw)
 
         # EOS
@@ -90,3 +94,7 @@ class State:
         self.lsc  = torch.zeros(ne, nz+1, 1, **fkw)
         self.diss = torch.zeros(ne, nz+1, 1, **fkw)
         self.M2   = torch.zeros(ne, nz+1, 1, **fkw)
+        
+        
+        # Biogeochemistry: (ne, nz, nbvar), one column per tracer
+        self.bgc = torch.zeros(ne, nz, cfg.nbgc, **f64kw)

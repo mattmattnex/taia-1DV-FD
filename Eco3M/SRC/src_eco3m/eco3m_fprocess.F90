@@ -1,6 +1,6 @@
 !***************************************************************************
 !***************************************************************************
-!Copyright or © or Copr. CNRS/IRD/Université de la Méditerranée
+!Copyright or ï¿½ or Copr. CNRS/IRD/Universitï¿½ de la Mï¿½diterranï¿½e
 !contributor(s) : Melika BAKLOUTI & V#incent FAURE (10/10/2006)
 !
 !melika.baklouti@univ-amu.fr; 
@@ -42,11 +42,11 @@ MODULE mod_eco3m_fprocess
     !
     !---------------------------------------------------------------------------
     !
-    ! Ce module sert a integrer toutes les fonctions modélisant
-    ! des processus que l''on désire intégrer dans le modèle
+    ! Ce module sert a integrer toutes les fonctions modï¿½lisant
+    ! des processus que l''on dï¿½sire intï¿½grer dans le modï¿½le
     !
     ! Ce fichier est donc l''un des rares fichiers que l''utilisateur est
-    ! amené à modifier
+    ! amenï¿½ ï¿½ modifier
     !
     ! ATTENTION: il doit y figurer obligatoirement le nom de la fonction
     ! calculant le coefficient d''ext#inction lumineuse
@@ -64,12 +64,65 @@ CONTAINS
     !----------------------------------------------------------------------------
     !-----------------------------UPTAKE DE NUTRIMENTS---------------------------
     !----------------------------------------------------------------------------
-    !FONCTION DE MONOD:
-#include "F_PROCESS/UPT/f_upt_monod_bidon.inc"
+#include "F_PROCESS/UPT/f_upt_monod_cell_multX.inc"
+#include "F_PROCESS/UPT/f_inhib_Frost_Franzen.inc"
+ 
     !----------------------------------------------------------------------------
-    !------------------------------MORTALITE NATURELLE----------------------------
-    !-----------------------------------------------------------------------------
-    !FONCTION DE MORTALITE:
-#include "F_PROCESS/MORT/f_mort_linear_bidon.inc"
-    !-----------------------------------------------------------------------------
+    !------------------------------MORTALITE NATURELLE---------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/MORT/f_mort_linear_cell_2026.inc"
+#include "F_PROCESS/MORT/f_mort_quadratique_cell_2026.inc"
+ 
+    !----------------------------------------------------------------------------
+    !--------------LIMITATION PAR UN QUOTA INTRACELLULAIRE-----------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/FQUOTA/f_hQPPX_geid_2026.inc"
+#include "F_PROCESS/FQUOTA/f_fQPPX_geid_2026.inc"
+#include "F_PROCESS/FQUOTA/f_hQPPC_geid_2026.inc"
+#include "F_PROCESS/FQUOTA/f_fQPPC_geid_2026.inc"
+#include "F_PROCESS/FQUOTA/f_fQPPC_geid_rem_2025_clean.inc"
+#include "F_PROCESS/FQUOTA/f_hQPPC_geid_rem_2025_clean.inc"
+ 
+    !----------------------------------------------------------------------------
+    !--------------------------------PHOTOSYNTHESE-------------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/PPB/f_ppb_han_2025_clean.inc"
+ 
+    !----------------------------------------------------------------------------
+    !----------------------------------CROISSANCE--------------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/GROWTH/f_growth_cell_droop_2024.inc"
+#include "F_PROCESS/GROWTH/f_growth_cell_droop_convX_2026.inc"
+#include "F_PROCESS/GROWTH/f_growth_MOP2MZOO_2025_clean.inc"
+#include "F_PROCESS/GROWTH/f_growth_MOPX2MZOO_2025_clean.inc"
+ 
+    !----------------------------------------------------------------------------
+    !-------------------------PRODUCTION DE CHLOROPHYLLE-------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/PChl/f_regul_Chl_bak2026.inc"
+#include "F_PROCESS/PChl/f_synth_Chl.inc"
+ 
+    !----------------------------------------------------------------------------
+    !---------------------------------NITRIFICATION------------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/NITRIF/f_nitrif_linear_2026.inc"
+ 
+    !----------------------------------------------------------------------------
+    !------------------------REMINERALISATION DE LA MO---------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/REMIN/f_hydrol_C_2026.inc"
+#include "F_PROCESS/REMIN/f_ratio_OM.inc"
+ 
+    !----------------------------------------------------------------------------
+    !-------------------------PREDATION DU ZOOPLANCTON---------------------------
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/GRAZ/M_PROIES/f_graz_hol2_mpreys_X_2025.inc"
+#include "F_PROCESS/GRAZ/M_PROIES/f_graz_KTW_revis.inc"
+ 
+    !----------------------------------------------------------------------------
+    !--------------------------FONCTION D'EXTINCTION-----------------------------
+    !  Mandatory except in uncoupled 0D mode (see modele.def header).
+    !----------------------------------------------------------------------------
+#include "F_PROCESS/LIGHT/ATTENUATION/f_extinc_morel88.inc"
+
 END MODULE mod_eco3m_fprocess

@@ -126,6 +126,9 @@ class Config:
     temp_stochastic: bool = False
     Tsurf:  float = 20.5 # Initial surface T
     Tbotm:  float = 20.0 # Initial bottom T
+    
+    # --- BGC Eco3M coupling ---
+    nbgc: int = 0 # number of var in Eco3M (checked in bgc_init)
 
     # --- Derived quantities (set in finalize) ---
     f:          float = None
@@ -141,6 +144,7 @@ class Config:
         # --- Types kwargs ---
         dev = torch.device(self.device)
         self.farr_kwargs = {"dtype": torch.float32,   "device": dev}
+        self.f64arr_kwargs = {"dtype": torch.float64,   "device": dev}
         self.carr_kwargs = {"dtype": torch.complex64, "device": dev}
         
         # --- Derived scalars ---
