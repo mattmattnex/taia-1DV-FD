@@ -14,7 +14,7 @@ ANIM = False
 # ======================================================================
 cfg = Config()
 
-cfg.ne = 8
+cfg.ne = 20
 cfg.nz = 64
 cfg.Hmin = 0.0
 cfg.Hmax = 150.0
@@ -50,7 +50,7 @@ cfg.tke_azt_min = 1.2e-5
 
 cfg.nbgc = 15
 
-cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/4_Eco3M_DYFAMED/output/"
+cfg.save_folder = "/home/mnex/Desktop/1DV_FD/experiments/4_Eco3M_test/output/"
 cfg.file_name = "eco3M_minimal.nc"
 cfg.var_to_save = [
     'mld', 'N2', 'temp',
@@ -165,7 +165,7 @@ if ANIM:
 # ================== Main Loop ==================
 for kt in range(cfg.nt):
     prof.start()
-    
+
     # --- Wind ---
     phy.wind_ornstein_step(model)
     u_star = phy.compute_ustar(model).squeeze(-1)
@@ -180,7 +180,7 @@ for kt in range(cfg.nt):
     irrad_t = torch.as_tensor(irrad, **cfg.farr_kwargs)
 
     # --- Tracers and EOS ---
-    eos.temperature_equation_step(model, heat_flux_sw=irrad_t, heat_flux_ns=Q_NS)
+    eos.temperature_equation_step(model, heat_flux_ns=Q_NS, heat_flux_sw=irrad_t)
     eos.salinity_equation_step(model)
     eos.eos_step(model)
     mix.mld_step(model)

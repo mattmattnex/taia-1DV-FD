@@ -57,8 +57,7 @@ class SaveNetCDF:
         self.ds.createDimension("zw", nz + 1)      # faces
 
         # --- Coordinates ---
-        self.var_time = self.ds.createVariable("time", "f8", ("time",),
-                                               chunksizes=(self.flush_every,))
+        self.var_time = self.ds.createVariable("time", "f8", ("time",), chunksizes=(self.flush_every,))
         self.var_time.units = "seconds since start"
 
         var_zc = self.ds.createVariable("zc", "f4", ("zc",))
